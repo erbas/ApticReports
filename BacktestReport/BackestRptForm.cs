@@ -174,7 +174,7 @@ namespace BacktestReport
             engine.Evaluate("print(timeframe)");
             engine.Evaluate("print(path.eod)");
             engine.Evaluate("print(path.out)");
-            engine.Evaluate("print(filestem.out)");
+            engine.Evaluate("print(filestem.out)"); 
 
             // 3. run R script to make daily pnl
             engine.Evaluate("source('BacktestMakeDaily.R')");
