@@ -41,7 +41,7 @@ namespace PortfolioReport
             engine.Evaluate("library(quantmod)");
             engine.Evaluate("library(PerformanceAnalytics)");
             engine.Evaluate("print(getwd())");
-            engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
+            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
             engine.Evaluate("print(getwd())");
         }
 
