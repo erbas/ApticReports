@@ -1,7 +1,8 @@
 Sys.setenv(TZ = "Europe/London")
 library(quantmod)
 library(PerformanceAnalytics)
-path.src <- "C:/Users/Keiran/Documents/Backtest_Source/R/"
+path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/")
+#"C:/Users/Keiran/Documents/Backtest_Source/R/"
 
 # # # # hard coded paths for debug - need trailing slash
 # #path.in <- "Y:/Saxons Cloud Data/Cloud Data/Trades_NT7 Backtest/Trades_NT7/Metals/Silver/CIT/BSc/PRG/"

@@ -37,10 +37,10 @@ namespace BacktestReport
             engine.Evaluate("library(quantmod)");
             engine.Evaluate("library(PerformanceAnalytics)");
             engine.Evaluate("print(getwd())");
-            engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
+            engine.Evaluate("Sys.getenv('HOME')");
+            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
             engine.Evaluate("print(getwd())");
             //engine.Evaluate("print(list.files())");
-            //engine.Evaluate("source('daily_PnL_v3.R')");
         }
 
         private void button1_Click(object sender, EventArgs e)      // choose file dialog
