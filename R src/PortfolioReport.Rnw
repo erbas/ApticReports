@@ -29,7 +29,7 @@ load("temp_rtns2.RData")
 \begin{figure}
 \vspace{0pt}
 <<Performance,echo=FALSE,eval=TRUE,fig.width=4,fig.height=5>>=
-charts.PerformanceSummary(ptf.daily,geometric=F,wealth.index=F,colorset=rich6equal,main=NULL,gap=0,xlab=NULL,legend.loc="bottomleft")
+charts.PerformanceSummary(ptf.daily,geometric=F,wealth.index=F,colorset=rich6equal,main=NULL,gap=0,xlab=NULL,legend.loc="topleft")
 @
 \end{figure}
 \end{textblock*}
@@ -122,7 +122,7 @@ print(xtable(cbind(dts[,c(1:3)],DRAWDNS[,c(4,5)]),digits=c(0,0,0,0,2,0)),floatin
 \begin{textblock*}{180mm}(15mm,160mm)
 \begin{figure}
 \vspace{0pt}
-<<voletc,echo=FALSE,warning=TRUE,eval=TRUE,fig.width=8.5,fig.height=2.5>>=
+<<voletc,echo=FALSE,warning=FALSE,eval=TRUE,fig.width=8.5,fig.height=2.5>>=
 layout(t(matrix(1:6,3,1)),respect=FALSE)
 cex.m <- 1
 cex.lg <- 0.7

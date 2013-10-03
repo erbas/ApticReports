@@ -50,7 +50,7 @@
             this.dateTimePicker2 = new System.Windows.Forms.DateTimePicker();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.PtfPtfCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // openFileDialog1
@@ -252,15 +252,16 @@
             this.label5.TabIndex = 19;
             this.label5.Text = "End Date";
             // 
-            // checkBox2
+            // PtfPtfCheckBox
             // 
-            this.checkBox2.AutoSize = true;
-            this.checkBox2.Location = new System.Drawing.Point(544, 185);
-            this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(126, 17);
-            this.checkBox2.TabIndex = 20;
-            this.checkBox2.Text = "Portofio of Portfolios?";
-            this.checkBox2.UseVisualStyleBackColor = true;
+            this.PtfPtfCheckBox.AutoSize = true;
+            this.PtfPtfCheckBox.Location = new System.Drawing.Point(544, 185);
+            this.PtfPtfCheckBox.Name = "PtfPtfCheckBox";
+            this.PtfPtfCheckBox.Size = new System.Drawing.Size(126, 17);
+            this.PtfPtfCheckBox.TabIndex = 20;
+            this.PtfPtfCheckBox.Text = "Portofio of Portfolios?";
+            this.PtfPtfCheckBox.UseVisualStyleBackColor = true;
+            this.PtfPtfCheckBox.CheckedChanged += new System.EventHandler(this.checkBox2_checkedChanged);
             // 
             // PortfolioReportForm
             // 
@@ -268,7 +269,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(669, 350);
             this.ControlBox = false;
-            this.Controls.Add(this.checkBox2);
+            this.Controls.Add(this.PtfPtfCheckBox);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.dateTimePicker2);
@@ -318,7 +319,7 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.DateTimePicker dateTimePicker2;
         private System.Windows.Forms.DateTimePicker dateTimePicker1;
-        private System.Windows.Forms.CheckBox checkBox2;
+        private System.Windows.Forms.CheckBox PtfPtfCheckBox;
     }
 }
 

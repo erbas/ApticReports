@@ -2,6 +2,7 @@ Sys.setenv(TZ = "Europe/London")
 library(quantmod)
 library(PerformanceAnalytics)
 path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/")
+print(path.src)
 #path.src <- "C:/Users/Keiran/Documents/Backtest_Source/R/"
 source(paste0(path.src,"daily_PnL_v4.R"))
 
@@ -26,7 +27,10 @@ print(paste("loaded ninja trade file",filename,sep=":"))
 eod.xts <- load.eod.prices(ccy.pair,path.eod)
 toUSD.xts <- load.USD.conv(ccy.pair,path.eod)
 print(paste("loaded eod reval file",paste(path.eod,ccy.pair,sep=""),sep="  "))
-#processed <- tryCatch(make.daily.pnl(trades.csv,eod.xts,toUSD.xts,"USD",fmt="%d/%m/%Y %I:%M:%S %p"), error=function(e) print(e), finally=traceback())
+# debug
+print(list.dirs('.'))
+print(head(trades.csv))
+print(tail(eod.xts))
 processed <- make.daily.pnl(trades.csv,eod.xts,toUSD.xts,"USD",fmt="%d/%m/%Y %I:%M:%S %p")
 
 print("made daily pnl")

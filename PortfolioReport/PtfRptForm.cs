@@ -120,7 +120,8 @@ namespace PortfolioReport
             // make sure we start in the correct directory with a clean environment
             engine.Evaluate("rm(list=ls())");
             engine.Evaluate("gc()");
-            engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
+//            engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
+            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
 
             // pass pnl files into R
             CharacterVector r_input_files = engine.CreateCharacterVector(input_files);
@@ -137,6 +138,7 @@ namespace PortfolioReport
             // pass in dates and flags
             LogicalVector r_relrtns = engine.CreateLogicalVector(new bool[] { relative_returns });
             engine.SetSymbol("rel.rtns", r_relrtns);
+            ptf_of_ptf = PtfPtfCheckBox.Checked;
             LogicalVector r_ptfflag = engine.CreateLogicalVector(new bool[] { ptf_of_ptf });
             engine.SetSymbol("ptf.of.ptf", r_ptfflag);
 
@@ -150,6 +152,7 @@ namespace PortfolioReport
             engine.Evaluate("print(filenames)");
             engine.Evaluate("print(path.out)");
             engine.Evaluate("print(filestem)");
+            engine.Evaluate("print(paste('ptf.of.ptf = ',ptf.of.ptf,collapse=' '))");
 
             // 3. run R script to make daily pnl
             engine.Evaluate("source('PortfolioMakeReport.R')");
@@ -223,7 +226,7 @@ namespace PortfolioReport
 
         private void checkBox2_checkedChanged(object sender, EventArgs e)
         {
-            this.ptf_of_ptf = checkBox1.Checked;
+            this.ptf_of_ptf = PtfPtfCheckBox.Checked;
         }
 
         private void dateEndChanged(object sender, EventArgs e)
