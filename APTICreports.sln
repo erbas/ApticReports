@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BacktestReport", "BacktestR
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortfolioReport", "PortfolioReport\PortfolioReport.csproj", "{2DB62CB7-9B03-4991-92CD-2E7D72330607}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradarFileConversion", "TradarFileConversion\TradarFileConversion.csproj", "{350C3BFC-06F5-4E25-AE59-83290180B774}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,18 @@ Global
 		{2DB62CB7-9B03-4991-92CD-2E7D72330607}.Release|x64.ActiveCfg = Release|Any CPU
 		{2DB62CB7-9B03-4991-92CD-2E7D72330607}.Release|x86.ActiveCfg = Release|Any CPU
 		{2DB62CB7-9B03-4991-92CD-2E7D72330607}.Release|x86.Build.0 = Release|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Release|Any CPU.Build.0 = Release|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Release|x64.ActiveCfg = Release|Any CPU
+		{350C3BFC-06F5-4E25-AE59-83290180B774}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
