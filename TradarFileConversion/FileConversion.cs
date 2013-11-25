@@ -88,37 +88,67 @@ namespace TradarFileConversion
             nt7["Exit name"] = 11;
             nt7["Profit"] = 12;
 
-            Dictionary<string, int> tradar = new Dictionary<string, int>();
-
-            tradar["Trade Type"] = 0;
-            tradar["Security Identifier"] = 1;
-            tradar["Strategy"] = 2;
-            tradar["Fund"] = 3;
-            tradar["Trader"] = 4;
-            tradar["Price"] = 5;
-            tradar["Amount"] = 6;
-            tradar["Trade Date"] = 7;
-            tradar["Consideration"] = 8;
-
-            // define headings for output file
-            // NOTE: using 'fund' for trade reference
-            string tradar_headers =  "Trade Type, Security Identifier, Strategy, Amount, Price, Trade Date, Fund";
-
             // need to reverse position for closing trades
             Dictionary<string, string> nt7_close = new Dictionary<string, string>();
-            nt7_close.Add("Long", "Short");
-            nt7_close.Add("Short", "Long");
+            nt7_close.Add("Long", "Sell");
+            nt7_close.Add("Short", "Buy");
 
             // translate NT7 trade types into tradar types
             Dictionary<string, string> trade_type = new Dictionary<string, string>();
-            trade_type.Add("Long", "Buy");
-            trade_type.Add("Short", "Sell");
-
+            trade_type.Add("Long", "OpenLong");
+            trade_type.Add("Short", "OpenShort");
+            trade_type.Add("Sell", "Sell");
+            trade_type.Add("Buy", "Buy");
+            
             // use a hash of the full filename with path to get an integer reference linking buys and sells
-            string filename_hash = filename.GetHashCode().ToString();
+            string filename_hash = Math.Abs(filename.GetHashCode()).ToString(); 
+
+            // parse full path to discern strategy information
+            string [] path_pieces = filename.Split(new char [] {System.IO.Path.PathSeparator, ' ', '_'} );
+           
+            string entry_type = "";
+            if (filename.Contains("CIT"))
+            {
+                entry_type = "CIT";
+            }
+            else if (filename.Contains("MR"))
+            {
+                entry_type = "MR";
+            }
+            else if (filename.Contains("Trend"))
+            {
+                entry_type = "Trend";
+            }
+
+            string [] n7filename_pieces = nt7filename.Split(' ');
+            string time_frame = n7filename_pieces[2];
+            string strategy_direction = n7filename_pieces[3].Split('_')[0];
+
+            string exit_type = "";
+            if (n7filename_pieces.Last().Contains('x'))
+            {
+                exit_type = "Ratio " + n7filename_pieces.Last();
+            }
+            else if (n7filename_pieces[5].Split('_')[0] == "b")
+            {
+                exit_type = "TSL";
+            }
+            else if (n7filename_pieces[5].Split('_')[0] == "a")
+            {
+                exit_type = "ACAP";
+            }
+            else if (n7filename_pieces[5].Split('_')[0] == "ab")
+            {
+                exit_type = "ACAP+TSL";
+            }
+
+
 
             // open the output file
-            string tradar_trade_filename = System.IO.Path.Combine(new string [] {path_out, nt7filename + "_tradar.csv"});
+            // define headings for output file
+            string tradar_headers = "Trade Type, Instrument, Entry Type, TimeFrame, Strategy Direction, Exit Type, Amount, Price, Trade Date, RefNum";
+
+            string tradar_trade_filename = System.IO.Path.Combine(new string[] { path_out, nt7filename + "_tradar.csv" });
             System.IO.StreamWriter tradar_trade_file = new System.IO.StreamWriter(tradar_trade_filename);
             tradar_trade_file.WriteLine(tradar_headers);
             
@@ -139,7 +169,10 @@ namespace TradarFileConversion
                 string s_tradar_1 = String.Join(",", new string [] {   
                                                 trade_type[s[nt7["Market pos."]]], 
                                                 security_identifier, 
-                                                nt7filename,  
+                                                entry_type,
+                                                time_frame,
+                                                strategy_direction,
+                                                exit_type,
                                                 s[nt7["Quantity"]],
                                                 s[nt7["Entry price"]],
                                                 s[nt7["Entry time"]],
@@ -149,7 +182,10 @@ namespace TradarFileConversion
                 string s_tradar_2 = String.Join(",", new string [] {   
                                                 trade_type[nt7_close[s[nt7["Market pos."]]]], 
                                                 security_identifier, 
-                                                nt7filename,  
+                                                entry_type,
+                                                time_frame,
+                                                strategy_direction,
+                                                exit_type,
                                                 s[nt7["Quantity"]],
                                                 s[nt7["Exit price"]],
                                                 s[nt7["Exit time"]],
