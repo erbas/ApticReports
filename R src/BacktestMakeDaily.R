@@ -7,10 +7,10 @@ print(path.src)
 source(paste0(path.src,"daily_PnL_v4.R"))
 
 # # hard coded paths for debug - need trailing slash
-# #path.in <- "Y:/Saxons Cloud Data/Cloud Data/Trades_NT7 Backtest/Trades_NT7/Metals/Silver/CIT/Sell/TSL/"
-# path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/"
+# path.in <- "Y:/Saxons Cloud Data/Cloud Data/Trades_NT7 Backtest/Trades_NT7/CIT/EURUSD/CIT/_Trades_Buys/TSL/2006-2013 Q3/"
+# # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/"
 # path.eod <- "Y:/Saxons Cloud Data/Data History/Revaluation rates/"
-# filename <- "EURUSD 60min 500bar 5tic 1_1_2012 - 11_1_2012.csv"
+# filename <- "BT2 EURUSD 240 Buys_01012006 30092013 b_TSL2 LB6.csv"
 # file.with.path <- paste0(path.in,filename)
 # filestem.out <- substr(filename,start=1,stop=nchar(filename)-4)
 # filename <- file.with.path
@@ -18,8 +18,8 @@ source(paste0(path.src,"daily_PnL_v4.R"))
 # path.out <- "C:/Users/Keiran/Desktop/Kt BAckTests/Reports BRG/"
 # ccy.pair <- "EURUSD"
 # strategy <- "Scryer"
-# timeframe <- "60 min"
-# strat.dir <- "LongShort"
+# timeframe <- "240 min"
+# strat.dir <- "Long"
 
 # series of function calls to be executed in C#
 trades.csv <- get.ninja.trades(file.with.path=filename)   # NOTE filename variable has path in C#

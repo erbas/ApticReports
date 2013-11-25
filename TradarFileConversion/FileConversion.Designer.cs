@@ -50,6 +50,7 @@
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
+            this.openFileDialog1.Multiselect = true;
             this.openFileDialog1.Title = "File";
             // 
             // button1

@@ -26,7 +26,7 @@ get.ninja.trades <- function(file.with.path) {
 load.eod.prices <- function(ccy.pair,path) {
   #stopifnot(substr(path.eod,length(path.eod),length(path.eod)) == "/")
   filename <- paste0(path,ccy.pair,"_EOD",".csv")
-  eod.csv <- read.csv(filename,header=T,sep=",",strip.white=T,stringsAsFactors=F,skip=1)
+  eod.csv <- read.csv(filename,header=T,sep=",",strip.white=TRUE,stringsAsFactors=FALSE,skip=1)
 #   print("---> inside load.eod.prices <---")
 #   print(tail(eod.csv))
   prices <- as.numeric(eod.csv[,2])

@@ -121,6 +121,7 @@ namespace TradarFileConversion
             }
 
             string [] n7filename_pieces = nt7filename.Split(' ');
+            string entry_type_reference = n7filename_pieces[0];
             string time_frame = n7filename_pieces[2];
             string strategy_direction = n7filename_pieces[3].Split('_')[0];
 
@@ -146,7 +147,7 @@ namespace TradarFileConversion
 
             // open the output file
             // define headings for output file
-            string tradar_headers = "Trade Type, Instrument, Entry Type, TimeFrame, Strategy Direction, Exit Type, Amount, Price, Trade Date, RefNum";
+            string tradar_headers = "Trade Type, Instrument, Entry Type, Entry Type Reference, TimeFrame, Strategy Direction, Exit Type, Amount, Price, Trade Date, RefNum";
 
             string tradar_trade_filename = System.IO.Path.Combine(new string[] { path_out, nt7filename + "_tradar.csv" });
             System.IO.StreamWriter tradar_trade_file = new System.IO.StreamWriter(tradar_trade_filename);
@@ -170,6 +171,7 @@ namespace TradarFileConversion
                                                 trade_type[s[nt7["Market pos."]]], 
                                                 security_identifier, 
                                                 entry_type,
+                                                entry_type_reference,
                                                 time_frame,
                                                 strategy_direction,
                                                 exit_type,
@@ -183,6 +185,7 @@ namespace TradarFileConversion
                                                 trade_type[nt7_close[s[nt7["Market pos."]]]], 
                                                 security_identifier, 
                                                 entry_type,
+                                                entry_type_reference,
                                                 time_frame,
                                                 strategy_direction,
                                                 exit_type,
