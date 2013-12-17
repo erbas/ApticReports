@@ -6,32 +6,40 @@ print(path.src)
 #path.src <- "C:/Users/Keiran/Documents/Backtest_Source/R/"
 source(paste0(path.src,"daily_PnL_v4.R"))
 
-# # hard coded paths for debug - need trailing slash
-# path.in <- "Y:/Saxons Cloud Data/Cloud Data/Trades_NT7 Backtest/Trades_NT7/CIT/EURUSD/CIT/_Trades_Buys/TSL/2006-2013 Q3/"
+# # # hard coded paths for debug - need trailing slash
+# path.in <- "Y:/Saxons Cloud Data/"
 # # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/"
 # path.eod <- "Y:/Saxons Cloud Data/Data History/Revaluation rates/"
-# filename <- "BT2 EURUSD 240 Buys_01012006 30092013 b_TSL2 LB6.csv"
+# filename <- "BT2 AUDCAD 240 Buys_01012010 30112013 2x.csv"
 # file.with.path <- paste0(path.in,filename)
 # filestem.out <- substr(filename,start=1,stop=nchar(filename)-4)
 # filename <- file.with.path
 # #path.out <- "Y:/Saxons Cloud Data/Cloud Data/Trades_NT7 Backtest/Trades_Test/"
-# path.out <- "C:/Users/Keiran/Desktop/Kt BAckTests/Reports BRG/"
-# ccy.pair <- "EURUSD"
+# path.out <- "C:/Users/Keiran/Desktop/Test/"
+# ccy.pair <- "AUDCAD"
 # strategy <- "Scryer"
 # timeframe <- "240 min"
 # strat.dir <- "Long"
 
 # series of function calls to be executed in C#
 trades.csv <- get.ninja.trades(file.with.path=filename)   # NOTE filename variable has path in C#
+hms <- strsplit(strsplit(trades.csv$Exit.time[1],split=" ")[[1]][2],":")[[1]]
+if (length(hms) == 2) {
+  fn <- dmy_hm
+} else if (length(hms) == 3) {
+  fn <- dmy_hms
+} else {
+  stop("cannot parse datetime in ninjatrade file")
+}
 print(paste("loaded ninja trade file",filename,sep=":"))
 eod.xts <- load.eod.prices(ccy.pair,path.eod)
 toUSD.xts <- load.USD.conv(ccy.pair,path.eod)
 print(paste("loaded eod reval file",paste(path.eod,ccy.pair,sep=""),sep="  "))
 # debug
-print(list.dirs('.'))
+# print(list.dirs('.'))
 print(head(trades.csv))
 print(tail(eod.xts))
-processed <- make.daily.pnl(trades.csv,eod.xts,toUSD.xts,"USD",fmt="%d/%m/%Y %I:%M:%S %p")
+processed <- make.daily.pnl(trades.csv,eod.xts,toUSD.xts,"USD",lfn=fn)
 
 print("made daily pnl")
 write.csv2(processed$trades,file=paste0(path.out,filestem.out,"_processed.csv"),sep=",")

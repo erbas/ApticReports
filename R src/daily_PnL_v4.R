@@ -1,5 +1,4 @@
-#Sys.setenv(TZ = "Europe/London")
-#library(quantmod)
+library(lubridate)
 
 # -----------------------------------------------------------------------------
 # setup functions
@@ -152,10 +151,13 @@ get.nearest.eod <- function(x,dir=1,official.eod) {
 # kahuna function to split trades at end-of-day to construct daily pnl series
 # -----------------------------------------------------------------------------
 
-make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,pnl.ccy="USD",TZ="Europe/London",eod.hour=17,fmt="%d/%m/%Y %I:%M:%S %p") {
+# make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,pnl.ccy="USD",TZ="Europe/London",eod.hour=17,fmt="%d/%m/%Y %I:%M:%S %p") {
   # create reference times and official eod prices with times
-  entries <- as.POSIXct(trades.csv$Entry.time,format=fmt,tz=TZ)
-  exits <- as.POSIXct(trades.csv$Exit.time,format=fmt,tz=TZ)
+  #entries <- as.POSIXct(trades.csv$Entry.time,format=fmt,tz=TZ)
+  #exits <- as.POSIXct(trades.csv$Exit.time,format=fmt,tz=TZ)
+make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,pnl.ccy="USD",TZ="Europe/London",eod.hour=17,lfn) {
+  entries <- lfn(trades.csv$Entry.time, tz=TZ)
+  exits <- lfn(trades.csv$Exit.time, tz=TZ)
   official.eod <- make.official.eod(eod.xts,eod.hour)
   indexTZ(official.eod) <- TZ
   # ignore trades closing after last eod price
@@ -252,7 +254,9 @@ make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,pnl.ccy="USD",TZ="Eur
   all.trades <- cbind(all.trades,pnl)
   # raw pnl in ref ccy (ie USD) whilst maintaining original entry times
   pnl.raw.vals <- ifelse(trades.csv[,"Market.pos."]=='Long',1,-1)*(trades.csv[,"Exit.price"]-trades.csv[,"Entry.price"])*trades.csv[,"Quantity"]
-  pnl.raw.xts <- xts(pnl.raw.vals,as.POSIXct(trades.csv[,'Entry.time'],format=fmt,tz='Europe/London'))
+  time.index <- lfn(trades.csv[,'Entry.time'],tz=TZ)
+  pnl.raw.xts <- xts(pnl.raw.vals, time.index)
+#   pnl.raw.xts <- xts(pnl.raw.vals,as.POSIXct(trades.csv[,'Entry.time'],format=fmt,tz='Europe/London'))
   pnl.raw.usd <- pnl.raw.xts
   for (i in 1:length(pnl.raw.xts)) {
     conv.rate <- get.nearest.eod(index(pnl.raw.xts[i]),dir=1,ref.ccy.conv)
