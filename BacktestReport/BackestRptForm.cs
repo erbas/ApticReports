@@ -27,7 +27,7 @@ namespace BacktestReport
 
             // initialise R engine
             var envPath = Environment.GetEnvironmentVariable("PATH");
-            var rBinPath = @"C:\Program Files\R\R-2.15.2\bin\i386";
+            var rBinPath = @"C:\Program Files\R\R-3.0.2\bin\i386";
             Environment.SetEnvironmentVariable("PATH", envPath + Path.PathSeparator + rBinPath);
             engine = REngine.CreateInstance("RDotNet");
             engine.Initialize();
