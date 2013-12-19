@@ -190,6 +190,23 @@ barplot(c(length(pnl.london),length(pnl.newyork),length(pnl.asia))/length(pnl.xt
 \vspace{0pt}
 
 <<zonertns,echo=FALSE,warning=FALSE,error=FALSE,eval=TRUE,fig.width=8.5,fig.height=2.5>>=
+
+# utility function to handle case of single pnl in timezone
+my_plot.xts <- function(x,ref,...) {
+  if (nrow(x) < 3) {
+    dt.first <- xts(0,index(first(ref)))
+    dt.last <- xts(coredata(last(x)),index(last(ref)))
+    m1 <- xts(0,index(x[1]) - 1)
+    p1 <- xts(coredata(last(x)),index(last(x)) + 1)
+    y <- rbind(dt.first,m1,x,p1,dt.last)
+#     print(y)
+    plot(y,...)
+  } else {
+    plot(x,...)
+  }
+}
+
+# being plotting
 layout(t(matrix(1:6,3,1)),respect=FALSE)
 cex.m <- 1
 cex.lg <- 0.7
@@ -203,9 +220,9 @@ pnl.london2 <- enforce.daily(eod.xts,pnl.london)
 pnl.newyork2 <- enforce.daily(eod.xts,pnl.newyork)
 pnl.asia2 <- enforce.daily(eod.xts,pnl.asia)
 
-plot(cumsum(pnl.london2)*100,main="Returns from London Trades",ylab="% AUM")
-plot(cumsum(pnl.newyork2)*100,main="Returns from New York Trades",ylab="% AUM")
-plot(cumsum(pnl.asia2)*100,main="Returns from Asia Trades",ylab="% AUM")
+my_plot.xts(x=cumsum(pnl.london2)*100,ref=pnl.xts,main="Returns from London Trades",ylab="% AUM")
+my_plot.xts(x=cumsum(pnl.newyork2)*100,ref=pnl.xts,main="Returns from New York Trades",ylab="% AUM")
+my_plot.xts(x=cumsum(pnl.asia2)*100,ref=pnl.xts,main="Returns from Asia Trades",ylab="% AUM")
 @
 \end{figure}
 \end{textblock*}
