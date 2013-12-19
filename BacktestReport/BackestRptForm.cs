@@ -136,14 +136,16 @@ namespace BacktestReport
             // make sure we start in the correct directory with a clean slate
             engine.Evaluate("rm(list=ls())");
             engine.Evaluate("gc()");
-            engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
+            //engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
+            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
+            engine.Evaluate("print(getwd())");
             // pass paths into R
             // ninja trade file 
             string filename = input_file.Replace(@"\", "/");
             CharacterVector r_input_file = engine.CreateCharacterVector(new string[] { filename });
             engine.SetSymbol("filename", r_input_file);
             // eod reval rates
-            string eod_path = "Y:/Saxons Cloud Data/Data History/Revaluation rates/";
+            string eod_path = "E:/Cloud Data/Data History/Revaluation rates/";
             CharacterVector r_eod_file = engine.CreateCharacterVector(new string[] { eod_path });
             engine.SetSymbol("path.eod", r_eod_file);
             // ccy pair
