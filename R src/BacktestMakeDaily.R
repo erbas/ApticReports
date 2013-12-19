@@ -3,7 +3,6 @@ library(quantmod)
 library(PerformanceAnalytics)
 path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/")
 print(path.src)
-#path.src <- "C:/Users/Keiran/Documents/Backtest_Source/R/"
 source(paste0(path.src,"daily_PnL_v4.R"))
 
 # # # hard coded paths for debug - need trailing slash
