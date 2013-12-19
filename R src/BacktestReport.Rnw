@@ -16,7 +16,7 @@ require(xtable)
 
 Sys.setenv(TZ = "Europe/London")
 ## DEGUB ##
-setwd("~/Backtest_Source/R")
+##setwd("~/Backtest_Source/R")
 ## DEGUB ##
 load("temp_pnl.RData")
 @
