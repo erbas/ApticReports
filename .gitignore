@@ -156,13 +156,16 @@ $RECYCLE.BIN/
 .DS_Store
 .Rproj.user
 
-# extraneous files
-.Rmd
-.md
-.pdf
-.tex
-.synctex.gz
-.csv
+# extraneous R files
+R src/*.Rmd
+R src/*.md
+R src/*.pdf
+R src/*.tex
+R src/*.synctex.gz
+R src/*.csv
+R src/*.Rhistory
+R src/*.RData
+R src/figure
 .Rhistory
-.RData
+
 
