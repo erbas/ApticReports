@@ -5,13 +5,13 @@ path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/")
 #"C:/Users/Keiran/Documents/Backtest_Source/R/"
 
 # # # # hard coded paths for debug - need trailing slash
-# #path.in <- "Y:/Saxons Cloud Data/Cloud Data/Trades_NT7 Backtest/Trades_NT7/Metals/Silver/CIT/BSc/PRG/"
+# #path.in <- "E:/Cloud Data/Trades_NT7 Backtest/Trades_NT7/Metals/Silver/CIT/BSc/PRG/"
 # path.in <- "C:/Users/Keiran/Desktop/Kt Debug/Ptf Reports/"
 # filenames <- grep(".*_pnl_daily.csv",dir(path.in),value=TRUE)
 # filenames <- "1XAG TSL 120 BSc test_pnl_daily.csv"
 # filenames <- filenames[2:3]
 # filestem <- "BT2 XAGUSD"
-# #path.out <- "Y:/Saxons Cloud Data/Cloud Data/Trades_NT7 Backtest/Trades_NT7/Metals/CIT/Report_PRG/"
+# #path.out <- "E:/Cloud Data/Trades_NT7 Backtest/Trades_NT7/Metals/CIT/Report_PRG/"
 # path.out <- "C:/Users/Keiran/Desktop/Kt Debug/Ptf Reports/"
 # setwd(path.in)
 # rel.rtns <- FALSE
@@ -20,7 +20,7 @@ path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/")
 # print(filenames)
 
 #load benchmark files
-index.path <- "Y:/Saxons Cloud Data/Data History/Benchmarks Indices/Other/"
+index.path <- "E:/Data History/Benchmarks Indices/Other/"
 new.edge.csv <- read.csv(paste0(index.path,"NewEdge_CTA_Historical.csv"),header=F,stringsAsFactors=F)
 vals <- as.numeric(strsplit(new.edge.csv[,2],"%"))/100
 new.edge.xts <- xts(vals,as.Date(new.edge.csv[,1],format="%d/%m/%Y",tz="Europe/London"))

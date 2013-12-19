@@ -7,30 +7,33 @@ print(path.src)
 source(paste0(path.src,"daily_PnL_v4.R"))
 
 # # # hard coded paths for debug - need trailing slash
-# path.in <- "Y:/Saxons Cloud Data/"
+# path.in <- "E:Model_Trades_Published Returns/Sub Strategies_Global Currency Program_Trades/Sub Strategy_CIT/Ratio/CIT SS2_553 Ratio Sell 25 bp/"
 # # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/"
-# path.eod <- "Y:/Saxons Cloud Data/Data History/Revaluation rates/"
-# filename <- "BT2 AUDCAD 240 Buys_01012010 30112013 2x.csv"
+# path.eod <- "E:Data History/Revaluation rates/"
+# filename <- "BT4 AUDUSD 1440 Sells_01012010 30112013 3x.csv"
 # file.with.path <- paste0(path.in,filename)
 # filestem.out <- substr(filename,start=1,stop=nchar(filename)-4)
 # filename <- file.with.path
-# #path.out <- "Y:/Saxons Cloud Data/Cloud Data/Trades_NT7 Backtest/Trades_Test/"
+# #path.out <- "E:Cloud Data/Trades_NT7 Backtest/Trades_Test/"
 # path.out <- "C:/Users/Keiran/Desktop/Test/"
-# ccy.pair <- "AUDCAD"
+# ccy.pair <- "AUDUSD"
 # strategy <- "Scryer"
-# timeframe <- "240 min"
-# strat.dir <- "Long"
+# timeframe <- "1440 min"
+# strat.dir <- "Short"
 
 # series of function calls to be executed in C#
 trades.csv <- get.ninja.trades(file.with.path=filename)   # NOTE filename variable has path in C#
 hms <- strsplit(strsplit(trades.csv$Exit.time[1],split=" ")[[1]][2],":")[[1]]
 if (length(hms) == 2) {
   fn <- dmy_hm
+  print("--> no seconds")
 } else if (length(hms) == 3) {
   fn <- dmy_hms
+  print("--> seconds")
 } else {
   stop("cannot parse datetime in ninjatrade file")
 }
+
 print(paste("loaded ninja trade file",filename,sep=":"))
 eod.xts <- load.eod.prices(ccy.pair,path.eod)
 toUSD.xts <- load.USD.conv(ccy.pair,path.eod)
