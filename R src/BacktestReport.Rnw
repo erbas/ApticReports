@@ -15,19 +15,23 @@ require(PerformanceAnalytics)
 require(xtable)
 
 Sys.setenv(TZ = "Europe/London")
-## DEGUB ##
-##setwd("~/Backtest_Source/R")
-## DEGUB ##
 load("temp_pnl.RData")
 @
 
 <<date_prep,echo=FALSE,eval=TRUE>>=
 # tidy up dates in daily pnl
 enforce.daily <- function(ref,pnl) {
+  if (nrow(pnl)==0) {
+    return(xts(0,index(last(ref))))
+  }
   idx1 <- index(first(pnl))
   idx2 <- index(last(pnl))
   idx <- paste(idx1,idx2,sep="/")
   pnl2 <- merge(ref,pnl,fill=0)[idx]
+#   print("--- inside enforce.daily ---")
+#   print(idx)
+#   print(dim(pnl2))
+#   print(head(pnl2))
   return(pnl2[,2])
 }
 pnl.daily2 <- enforce.daily(eod.xts,pnl.daily)
