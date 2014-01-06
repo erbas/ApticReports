@@ -95,10 +95,10 @@ namespace TradarFileConversion
 
             // translate NT7 trade types into tradar types
             Dictionary<string, string> trade_type = new Dictionary<string, string>();
-            trade_type.Add("Long", "OpenLong");
-            trade_type.Add("Short", "OpenShort");
+            trade_type.Add("Long", "Purchase");
+            trade_type.Add("Short", "Short");
             trade_type.Add("Sell", "Sell");
-            trade_type.Add("Buy", "Buy");
+            trade_type.Add("Buy", "Cover");
             
             // use a hash of the full filename with path to get an integer reference linking buys and sells
             string filename_hash = Math.Abs(filename.GetHashCode()).ToString(); 
@@ -126,9 +126,9 @@ namespace TradarFileConversion
             string strategy_direction = n7filename_pieces[3].Split('_')[0];
 
             string exit_type = "";
-            if (n7filename_pieces.Last().Contains('x'))
+            if (n7filename_pieces[5].Contains('x'))
             {
-                exit_type = "Ratio " + n7filename_pieces.Last();
+                exit_type = "Ratio"; // +n7filename_pieces.Last();
             }
             else if (n7filename_pieces[5].Split('_')[0] == "b")
             {
@@ -136,11 +136,11 @@ namespace TradarFileConversion
             }
             else if (n7filename_pieces[5].Split('_')[0] == "a")
             {
-                exit_type = "ACAP";
+                exit_type = "TREND";
             }
             else if (n7filename_pieces[5].Split('_')[0] == "ab")
             {
-                exit_type = "ACAP+TSL";
+                exit_type = "TREND TSL";
             }
 
 
