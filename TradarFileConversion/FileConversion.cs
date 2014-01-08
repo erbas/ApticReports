@@ -136,11 +136,11 @@ namespace TradarFileConversion
             }
             else if (n7filename_pieces[5].Split('_')[0] == "a")
             {
-                exit_type = "TREND";
+                exit_type = "ACAP";
             }
             else if (n7filename_pieces[5].Split('_')[0] == "ab")
             {
-                exit_type = "TREND TSL";
+                exit_type = "ACAP TSL";
             }
 
 
