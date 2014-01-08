@@ -4,19 +4,16 @@ library(PerformanceAnalytics)
 path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/")
 #"C:/Users/Keiran/Documents/Backtest_Source/R/"
 
-# # # # hard coded paths for debug - need trailing slash
+# # # hard coded paths for debug - need trailing slash
 # #path.in <- "E:/Cloud Data/Trades_NT7 Backtest/Trades_NT7/Metals/Silver/CIT/BSc/PRG/"
-# path.in <- "C:/Users/Keiran/Desktop/Kt Debug/Ptf Reports/"
-# filenames <- grep(".*_pnl_daily.csv",dir(path.in),value=TRUE)
-# filenames <- "1XAG TSL 120 BSc test_pnl_daily.csv"
-# filenames <- filenames[2:3]
-# filestem <- "BT2 XAGUSD"
-# #path.out <- "E:/Cloud Data/Trades_NT7 Backtest/Trades_NT7/Metals/CIT/Report_PRG/"
-# path.out <- "C:/Users/Keiran/Desktop/Kt Debug/Ptf Reports/"
+# path.in <- "C:/Users/Keiran/Desktop/KT investigation/"
+# filenames <- grep(".*P2_pnl_daily.csv",dir(path.in),value=TRUE)
+# filestem <- "CRNCY"
+# path.out <- "C:/Users/Keiran/Desktop/KT investigation/sp500 issue/"
 # setwd(path.in)
 # rel.rtns <- FALSE
 # ptf.of.ptf <- TRUE
-# start.end.dates <- c("01/04/2012","30/06/2013") 
+# start.end.dates <- c("01/01/2010","31/12/2013") 
 # print(filenames)
 
 #load benchmark files
