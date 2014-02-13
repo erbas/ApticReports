@@ -136,3 +136,4 @@ R src/*.RData
 R src/figure
 .Rhistory
 APTICreports.sln
+.RData
