@@ -37,6 +37,8 @@
             this.ButtonGo = new System.Windows.Forms.Button();
             this.Quit = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // textBox1
@@ -87,7 +89,7 @@
             // 
             // ButtonGo
             // 
-            this.ButtonGo.Location = new System.Drawing.Point(8, 295);
+            this.ButtonGo.Location = new System.Drawing.Point(8, 326);
             this.ButtonGo.Name = "ButtonGo";
             this.ButtonGo.Size = new System.Drawing.Size(75, 23);
             this.ButtonGo.TabIndex = 4;
@@ -97,7 +99,7 @@
             // 
             // Quit
             // 
-            this.Quit.Location = new System.Drawing.Point(406, 295);
+            this.Quit.Location = new System.Drawing.Point(406, 326);
             this.Quit.Name = "Quit";
             this.Quit.Size = new System.Drawing.Size(75, 23);
             this.Quit.TabIndex = 5;
@@ -108,17 +110,44 @@
             // progressBar1
             // 
             this.progressBar1.BackColor = System.Drawing.SystemColors.Control;
-            this.progressBar1.Location = new System.Drawing.Point(8, 324);
+            this.progressBar1.Location = new System.Drawing.Point(8, 355);
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(473, 23);
             this.progressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.progressBar1.TabIndex = 6;
             // 
+            // comboBox1
+            // 
+            this.comboBox1.FormattingEnabled = true;
+            this.comboBox1.Items.AddRange(new object[] {
+            "GCP",
+            "Comdty",
+            "EMP",
+            "Fund1"});
+            this.comboBox1.Location = new System.Drawing.Point(100, 283);
+            this.comboBox1.Name = "comboBox1";
+            this.comboBox1.Size = new System.Drawing.Size(134, 21);
+            this.comboBox1.TabIndex = 7;
+            this.comboBox1.Text = "GCP";
+            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(240, 291);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(152, 13);
+            this.label1.TabIndex = 8;
+            this.label1.Text = "Select Tradar Destination";
+            // 
             // FileConversion
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(492, 356);
+            this.ClientSize = new System.Drawing.Size(493, 387);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.comboBox1);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.Quit);
             this.Controls.Add(this.ButtonGo);
@@ -144,6 +173,8 @@
         private System.Windows.Forms.Button ButtonGo;
         private System.Windows.Forms.Button Quit;
         private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.Label label1;
     }
 }
 

@@ -14,6 +14,7 @@ namespace TradarFileConversion
     {
         String[] input_files = new String[] {""};
         String path_out = "";
+        String destination = "";
 
         public FileConversion()
         {
@@ -47,13 +48,26 @@ namespace TradarFileConversion
 
         }
 
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            destination = comboBox1.Text;
+        }
+
+/*        private void comboBox1_Close(object sender, EventArgs e)
+        {
+            destination = comboBox1.Text;
+        }
+*/
+
         private void ButtonQuit_Click(object sender, EventArgs e)
         {
             Application.Exit();
         }
 
+
         private void ButtonGo_Click(object sender, EventArgs e)         // do the file conversion
         {
+            destination = comboBox1.Text;
             double inc = 100/input_files.Length;
             int n = 1;
             foreach (string filename in input_files) 
@@ -147,7 +161,7 @@ namespace TradarFileConversion
 
             // open the output file
             // define headings for output file
-            string tradar_headers = "Trade Type, Instrument, Entry Type, Entry Type Reference, TimeFrame, Strategy Direction, Exit Type, Amount, Price, Trade Date, RefNum";
+            string tradar_headers = "Trade Type, Instrument, Entry Type, Entry Type Reference, TimeFrame, Strategy Direction, Exit Type, Amount, Price, Trade Date, RefNum, Book";
 
             string tradar_trade_filename = System.IO.Path.Combine(new string[] { path_out, nt7filename + "_tradar.csv" });
             System.IO.StreamWriter tradar_trade_file = new System.IO.StreamWriter(tradar_trade_filename);
@@ -159,7 +173,7 @@ namespace TradarFileConversion
             foreach (string line in System.IO.File.ReadLines(filename))
             {
                 string[] s = line.Split(',');
-                if (s[0] == "Trade-#")
+                if (s[0] == "Trade-#" || s[1] == "Instrument")
                 {
                     continue;  // skip the first line
                 }
@@ -178,7 +192,8 @@ namespace TradarFileConversion
                                                 s[nt7["Quantity"]],
                                                 s[nt7["Entry price"]],
                                                 s[nt7["Entry time"]],
-                                                trade_ref
+                                                trade_ref,
+                                                destination
                                             });
 
                 string s_tradar_2 = String.Join(",", new string [] {   
@@ -192,7 +207,8 @@ namespace TradarFileConversion
                                                 s[nt7["Quantity"]],
                                                 s[nt7["Exit price"]],
                                                 s[nt7["Exit time"]],
-                                                trade_ref
+                                                trade_ref,
+                                                destination
                                             });
 
 
@@ -208,6 +224,7 @@ namespace TradarFileConversion
             tradar_trade_file.Close();
 
         }
+
 
     }
 }
