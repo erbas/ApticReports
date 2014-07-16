@@ -44,7 +44,7 @@ print(tail(eod.xts))
 processed <- make.daily.pnl(trades.csv,eod.xts,toUSD.xts,"USD",lfn=fn)
 
 print("made daily pnl")
-write.csv2(processed$trades,file=paste0(path.out,filestem.out,"_processed.csv"),sep=",")
+write.csv(processed$trades,file=paste0(path.out,filestem.out,"_processed.csv"))
 write.zoo(processed$pnl.raw,file=paste0(path.out,filestem.out,"_pnl_raw.csv"),sep=",")
 # daily pnl file has some special features
 pnl.daily.file <- paste0(path.out,filestem.out,"_pnl_daily.csv")
