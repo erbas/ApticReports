@@ -151,11 +151,7 @@ get.nearest.eod <- function(x,dir=1,official.eod) {
 # kahuna function to split trades at end-of-day to construct daily pnl series
 # -----------------------------------------------------------------------------
 
-# make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,pnl.ccy="USD",TZ="Europe/London",eod.hour=17,fmt="%d/%m/%Y %I:%M:%S %p") {
-  # create reference times and official eod prices with times
-  #entries <- as.POSIXct(trades.csv$Entry.time,format=fmt,tz=TZ)
-  #exits <- as.POSIXct(trades.csv$Exit.time,format=fmt,tz=TZ)
-make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,pnl.ccy="USD",TZ="Europe/London",eod.hour=17,lfn) {
+make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eod.hour=17,lfn) {
   entries <- lfn(trades.csv$Entry.time, tz=TZ)
   exits <- lfn(trades.csv$Exit.time, tz=TZ)
   official.eod <- make.official.eod(eod.xts,eod.hour)

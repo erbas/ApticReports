@@ -41,7 +41,7 @@ print(paste("loaded eod reval file",paste(path.eod,ccy.pair,sep=""),sep="  "))
 # print(list.dirs('.'))
 print(head(trades.csv))
 print(tail(eod.xts))
-processed <- make.daily.pnl(trades.csv,eod.xts,toUSD.xts,"USD",lfn=fn)
+processed <- make.daily.pnl(trades.csv,eod.xts,toUSD.xts,lfn=fn)
 
 print("made daily pnl")
 write.csv(processed$trades,file=paste0(path.out,filestem.out,"_processed.csv"))
