@@ -3,7 +3,7 @@ library(quantmod)
 library(PerformanceAnalytics)
 path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/")
 print(path.src)
-source(paste0(path.src,"daily_PnL_v4.R"))
+source(paste0(path.src,"daily_PnL_v5.R"))
 
 # # # hard coded paths for debug - need trailing slash
 # path.in <- "E:Model_Trades_Published Returns/Sub Strategies_Global Currency Program_Trades/Sub Strategy_CIT/Ratio/CIT SS2_553 Ratio Sell 25 bp/"
