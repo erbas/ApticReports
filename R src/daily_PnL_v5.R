@@ -101,8 +101,9 @@ add.time.to.date <- function(x, eod.hour=17, TZ="Europe/London") {
 get.nearest.eod <- function(x, dir=1, eod.hms) {
   # given a datetime x, find the nearest valid end-of-day as defined by eod.hms 
   # dir=1 means the next end-of-day, dir=-1 means the previous eod 
-  stopifnot(is.xts(eod.hms), abs(dir)==1, length(x)==1)
+  stopifnot(is.POSIXt(x), is.xts(eod.hms), abs(dir)==1, length(x)==1)
   # find nearest official end of day
+#   print(x)
   if (any(index(eod.hms) == x)) {
     return(eod.hms[x])
   } else if (dir == 1) {
@@ -150,7 +151,7 @@ get.nearest.eod <- function(x, dir=1, eod.hms) {
 # kahuna function to split trades at end-of-day to construct daily pnl series
 # -----------------------------------------------------------------------------
 
-make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London", eod.hour=17, lfn) {
+make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London", eod.hour=17, lfn=ymdhms) {
   # convert trade entry and exit to POSIXct objects
   entries <- lfn(trades.csv$Entry.time, tz=TZ)
   exits <- lfn(trades.csv$Exit.time, tz=TZ)
@@ -190,7 +191,7 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London"
     synthetic.trade.dates[[i]] <- td
   }
   # get number of new trades and allocate data.frame
-  n.new.trades <- sum(unlist(lapply(synthetic.trade.dates, length)))
+  n.new.trades <- sum(unlist(lapply(synthetic.trade.dates, length))-1)
   new.trades <- as.data.frame(matrix(0, ncol=ncol(trades.raw), nrow=n.new.trades))
   colnames(new.trades) <- colnames(trades.raw)
   # only create new trades where needed
@@ -209,8 +210,8 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London"
     modified.exits[i, "Entry.price"]  <- coredata(eod.hms[ref.eod[length(ref.eod)]])
     modified.entries[i, "SplitID"] <- 1
     modified.exits[i, "SplitID"] <- length(ref.eod) + 1
-    print(modified.entries[i,])
-    print(modified.exits[i,])
+#     print(modified.entries[i,])
+#     print(modified.exits[i,])
     # create the synthetic daily trades
     for (j in 2:length(ref.eod)) {
       counter <- counter + 1
@@ -222,7 +223,7 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London"
       new.trades[counter, "Quantity"]    <- modified.entries[i,"Quantity"]
       new.trades[counter, "TradeID"]     <- modified.entries[i,"TradeID"]
       new.trades[counter, "SplitID"]     <- j
-      print(new.trades[counter,])
+#       print(new.trades[counter,])
     }
   }
   # now put all the trades together into one df
@@ -239,25 +240,34 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London"
   pnl.raw.vals <- ifelse(trades.csv[,"Market.pos."]=='Long',1,-1)*(trades.csv[,"Exit.price"]-trades.csv[,"Entry.price"])*trades.csv[,"Quantity"]
   time.index <- lfn(trades.csv[,'Exit.time'], tz=TZ)
   pnl.raw.xts <- xts(pnl.raw.vals, time.index)
+  # convert raw pnl to USD
   pnl.raw.usd <- pnl.raw.xts
   for (i in 1:length(pnl.raw.xts)) {
-    conv.rate <- get.nearest.eod(index(pnl.raw.xts[i]),dir=1,ref.ccy.conv)
+    conv.rate <- get.nearest.eod(index(pnl.raw.xts[i]),dir=1, ref.ccy.conv)
     pnl.raw.usd[i] <- pnl.raw.usd[i]*coredata(conv.rate)
   }
-  # sum all.trades' pnl to get daily pnl, then convert to USD
-  pnl.xts <- xts(all.trades$pnl, as.POSIXct(all.trades[,"Exit.time"]))
+  # clean up exit times so they align with official end-of-day
+  all.exit.times <- ymd_hms(all.trades[,"Exit.time"], tz = TZ)
+  eod.exit.times <- all.exit.times
+  for (i in 1:length(all.exit.times)) {
+    eod.exit.times[i] <- get.nearest.eod(all.exit.times[i], dir=1, eod.hms)  
+  }
+  all.trades <- cbind(all.trades, as.character(index(eod.exit.times)))
+  colnames(all.trades)[ncol(all.trades)] <- "Exit.time.official"
+  pnl.xts <- xts(all.trades$pnl, eod.exit.times)
+  # sum pnl in all.trades to get daily pnl, convert to USD
   ep <- endpoints(pnl.xts,'days')
-  pnl.daily <- period.apply(pnl.xts,INDEX=ep,FUN=sum)
+  pnl.daily <- period.apply(pnl.xts, INDEX=ep, FUN=sum)
   pnl.daily.usd <- pnl.daily*ref.ccy.conv
   # remove hour from datetime stamp
   pnl.lt <- convertIndex(pnl.daily.usd,"POSIXlt")
-  ix <- index(pnl.lt)
+  ix <- index(pnl.lt) 
   ix$hour <- rep(0,length(ix))  # turns datetime index into a date index (sorta kinda)
   pnl.daily.usd <- xts(coredata(pnl.lt),as.POSIXct(ix,tz=TZ))
   # sanity check
-  sum.daily.pnl <- aggregate(pnl ~ TradeID, data=all.trades.ordered, sum)
+  sum.daily.pnl <- aggregate(pnl ~ TradeID, data=all.trades, sum)
   discrepencies <- which(abs(sum.daily.pnl$pnl - coredata(pnl.raw.usd)) > 1.e-8)
-  return(list("trades"=all.trades.ordered,"pnl.daily"=pnl.daily.usd,"pnl.raw"=pnl.raw.usd,"sum.daily.pnl"= sum.daily.pnl,"discrepencies"=discrepencies))  
+  return(list("trades"=all.trades, "pnl.daily"=pnl.daily.usd, "pnl.raw"=pnl.raw.usd, "sum.daily.pnl"= sum.daily.pnl, "discrepencies"=discrepencies))  
 }
 
 # z <- Sys.time()
