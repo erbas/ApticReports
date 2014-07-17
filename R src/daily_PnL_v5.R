@@ -81,30 +81,30 @@ load.USD.conv <- function(ccy.pair,path,pnl.ccy="USD") {
     }
   } 
   colnames(ref.ccy.conv) <- conv.pair
-  return(make.official.eod(ref.ccy.conv))
+  return(add.time.to.date(ref.ccy.conv))
 }
 
 # -----------------------------------------------------------------------------
 # utility functions to get next or previous valid end-of-day
 # -----------------------------------------------------------------------------
 
-make.official.eod <- function(x,eod.hour=17) {
+add.time.to.date <- function(x, eod.hour=17) {
   # takes xts object with dates only and returns datetime object
   eod.xts <- convertIndex(x,"POSIXlt")
   index(eod.xts)$hour <- rep(eod.hour,length(index(eod.xts)))
   index(eod.xts)$min <- rep(0,length(index(eod.xts)))
   index(eod.xts)$sec <- rep(0,length(index(eod.xts)))
 #   official.eod.xts <- convertIndex(eod.xts,"POSIXct")
-  official.eod.xts <- xts(coredata(eod.xts),as.POSIXct(index(eod.xts),tz="Europe/London"))
+  official.eod.xts <- xts(coredata(eod.xts), as.POSIXct(index(eod.xts),tz="Europe/London"))
   return(official.eod.xts)  
 }
 
-get.nearest.eod <- function(x,dir=1,official.eod) {
-  # given a datetime x, find the nearest valid end-of-day as defined by official.closes.xts 
+get.nearest.eod <- function(x, dir=1, official.eod) {
+  # given a datetime x, find the nearest valid end-of-day as defined by official.eod 
   # dir=1 means the next end-of-day, dir=-1 means the previous eod 
-  stopifnot(is.xts(official.eod),abs(dir)==1,length(x)==1)
+  stopifnot(is.xts(official.eod), abs(dir)==1, length(x)==1)
   # find nearest official end of day
-  if (any(index(official.eod)==x)) {
+  if (any(index(official.eod) == x)) {
     return(official.eod[x])
   } else if (dir == 1) {
     i.valid <- which(index(official.eod) > x)
@@ -121,7 +121,7 @@ get.nearest.eod <- function(x,dir=1,official.eod) {
 # # test 
 # entries.eod <- xts(rep(0,length(entries)),entries)
 # z <- Sys.time()
-# off.eod <- make.official.eod(usd.jpy.xts,eod.hour=17)
+# off.eod <- add.time.to.date(usd.jpy.xts,eod.hour=17)
 # for (i in 1:length(entries)) {
 # #  entries.eod[i] <- index(get.nearest.eod(entries[i],dir=1,off.eod))
 #   a <- get.nearest.eod(entries[i],dir=1,off.eod)
@@ -151,10 +151,11 @@ get.nearest.eod <- function(x,dir=1,official.eod) {
 # kahuna function to split trades at end-of-day to construct daily pnl series
 # -----------------------------------------------------------------------------
 
-make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eod.hour=17,lfn) {
+make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London", eod.hour=17, lfn) {
+  # convert trade entry and exit to POSIXct objects
   entries <- lfn(trades.csv$Entry.time, tz=TZ)
   exits <- lfn(trades.csv$Exit.time, tz=TZ)
-  official.eod <- make.official.eod(eod.xts,eod.hour)
+  official.eod <- add.time.to.date(eod.xts,eod.hour)  # should really change the name of the this function
   indexTZ(official.eod) <- TZ
   # ignore trades closing after last eod price
   idx.skip <- which(exits > last(index(eod.xts)))
@@ -173,12 +174,23 @@ make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eo
   trades.raw[,"Entry.time"] <- as.character(entries)
   trades.raw[,"Exit.time"] <- as.character(exits)
   tradeID <- cbind(1:nrow(trades.raw),rep(0,nrow(trades.raw)))
-  trades.raw <- cbind(tradeID,trades.raw)
+  trades.raw <- cbind(tradeID, trades.raw)
   colnames(trades.raw) <- c("TradeID","SplitID","Market.pos.","Entry.price","Exit.price","Entry.time","Exit.time","Quantity")
   # sanity checks
   if (nrow(trades.raw) != nrow(trades.csv)) stop("rows(trades.raw) != rows(trades.csv)")
   if (length(entries)!=length(exits)) stop("entries and exits must be same length")
   if (nrow(trades.csv)!=length(exits)) stop("number of trades must equal number of exits")
+  ##
+  ##  new idea: use official.eod as source of truth for trades dates 
+  ##          : each trade is one line in trades csv
+  ##          : index(official.eod)[index(official.eod) > entries & index(official.eod)  < exits]
+  ##
+  ## trading.days <- index(official.eod)
+  ## synthetic.trades.dates <- trading.days[ trading.days > entries[i] & trading.days < exits[i] ]
+  ## 
+  ## 
+  ## 
+  ##
   # loop over trades see where entries and exits fall wrt eod's
   entry.next.eod <- xts(rep(0,length(entries)),entries)
   exit.prev.eod <- xts(rep(0,length(exits)),exits)
@@ -194,6 +206,7 @@ make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eo
   idx.split <- which(index(exit.prev.eod) > entries)
   mod.opens <- trades.raw[idx.split,]
   mod.closes <- trades.raw[idx.split,]
+  # identify days for which we need a synthetic trade 
   n.split <- as.numeric(as.Date(index(exit.prev.eod)[idx.split]) - as.Date(index(entry.next.eod)[idx.split]))
   n.new <- sum(n.split)
   new.trades <- data.frame(matrix(0,ncol=ncol(mod.closes),nrow=n.new))
@@ -204,7 +217,7 @@ make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eo
     k <- idx.split[i]
     mod.closes[i,"Exit.time"]  <- as.character(index(entry.next.eod)[k])
     mod.closes[i,"Exit.price"] <- coredata(entry.next.eod[k])
-    mod.opens[i,"Entry.time"]  <- as.character(index(exit.prev.eod)[k])
+    mod.opens[i,"Entry.time"]  <- as.character(index(exit.prev.eod)[k] + as.difftime(1,units="secs"))
     mod.opens[i,"Entry.price"] <-  coredata(exit.prev.eod[k])
     mod.closes[i,"SplitID"] <- 1
     mod.opens[i,"SplitID"] <- ifelse(n.split[i]>0,n.split[i]+2,2)
@@ -214,12 +227,12 @@ make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eo
       for (j in 1:n.split[i]) {
         counter <- counter + 1
         # create valid open and close dates for intermediate trades
-        open.datetime <- index(entry.next.eod)[k]  + (j-1)*as.difftime(1,units="days")
+        open.datetime <- index(entry.next.eod)[k]  + (j-1)*as.difftime(1,units="days") #+ as.difftime(1,units="secs")
         close.datetime <- index(entry.next.eod)[k]  + j*as.difftime(1,units="days")
         open.valid <- get.nearest.eod(open.datetime,1,official.eod)
         close.valid <- get.nearest.eod(close.datetime,1,official.eod) # walk fwd
-        #print(paste(i,k,j,open.valid,close.valid,sep="  "))
-        new.trades[counter,"Entry.time"]  <- as.character(index(open.valid))
+        print(paste(i,k,j,open.datetime, close.datetime, open.valid,close.valid,sep="  "))
+        new.trades[counter,"Entry.time"]  <- as.character(index(open.valid) + as.difftime(1,units="secs"))
         new.trades[counter,"Exit.time"]   <- as.character(index(close.valid)) 
         new.trades[counter,"Entry.price"] <- coredata(open.valid)
         new.trades[counter,"Exit.price"]  <- coredata(close.valid) 
@@ -242,7 +255,7 @@ make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eo
     all.valid.exits[i] <- valid.exit
   }
   all.trades[,"Exit.time"] <- as.character(all.valid.exits)
-  all.trades <- cbind(all.trades,original.exits)
+  all.trades <- cbind(all.trades, original.exits)
   colnames(all.trades)[ncol(all.trades)] <- "Original.exit"
   # calculate pnl for each trade - in original ccy 
   price.change <- all.trades[,"Exit.price"]-all.trades[,"Entry.price"]
@@ -250,7 +263,7 @@ make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eo
   all.trades <- cbind(all.trades,pnl)
   # raw pnl in ref ccy (ie USD) whilst maintaining original entry times
   pnl.raw.vals <- ifelse(trades.csv[,"Market.pos."]=='Long',1,-1)*(trades.csv[,"Exit.price"]-trades.csv[,"Entry.price"])*trades.csv[,"Quantity"]
-  time.index <- lfn(trades.csv[,'Entry.time'],tz=TZ)
+  time.index <- lfn(trades.csv[,'Exit.time'],tz=TZ)
   pnl.raw.xts <- xts(pnl.raw.vals, time.index)
 #   pnl.raw.xts <- xts(pnl.raw.vals,as.POSIXct(trades.csv[,'Entry.time'],format=fmt,tz='Europe/London'))
   pnl.raw.usd <- pnl.raw.xts
@@ -271,7 +284,10 @@ make.daily.pnl <- function(trades.csv,eod.xts,ref.ccy.conv,TZ="Europe/London",eo
   # order trades
   idx <- order(all.trades[,"TradeID"],all.trades[,"SplitID"])
   all.trades.ordered <- all.trades[idx,]
-  return(list("trades"=all.trades.ordered,"pnl.daily"=pnl.daily.usd,"pnl.raw"=pnl.raw.usd))  
+  # sanity check
+  sum.daily.pnl <- aggregate(pnl ~ TradeID, data=all.trades.ordered, sum)
+  discrepencies <- which(abs(sum.daily.pnl$pnl - coredata(pnl.raw.usd)) > 1.e-8)
+  return(list("trades"=all.trades.ordered,"pnl.daily"=pnl.daily.usd,"pnl.raw"=pnl.raw.usd,"sum.daily.pnl"= sum.daily.pnl,"discrepencies"=discrepencies))  
 }
 
 # z <- Sys.time()
