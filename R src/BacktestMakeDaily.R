@@ -1,10 +1,19 @@
 Sys.setenv(TZ = "Europe/London")
 library(quantmod)
 library(PerformanceAnalytics)
-path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/")
+
+if (length(grep(pattern = "apple",x = Sys.getenv("R_PLATFORM"), fixed = TRUE)) !=0) {
+  path.src <- paste0(Sys.getenv("HOME"),"/Dropbox/workspace/ApticReports/R src/")
+}
+else {
+  path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/") 
+}
 print(path.src)
 source(paste0(path.src,"daily_PnL_v5.R"))
 
+# -----------------------------------------------------------------------------
+#  windows debug
+# -----------------------------------------------------------------------------
 # # # hard coded paths for debug - need trailing slash
 # path.in <- "E:Model_Trades_Published Returns/Sub Strategies_Global Currency Program_Trades/Sub Strategy_CIT/Ratio/CIT SS2_553 Ratio Sell 25 bp/"
 # # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/"
@@ -20,9 +29,24 @@ source(paste0(path.src,"daily_PnL_v5.R"))
 # timeframe <- "1440 min"
 # strat.dir <- "Short"
 
+
+# -----------------------------------------------------------------------------
+#  OS X debug
+# -----------------------------------------------------------------------------
+
+filename <- "~/Desktop/aptic/BT4 XAUUSD 1440 Buys_01042012 31122013 2x.csv"
+path.eod <- "~/Desktop/aptic/"
+ccy.pair <- "XAUUSD"
+path.out <- "~/Desktop/aptic/"
+x <- strsplit(x=filename, split="/", fixed=TRUE)[[1]]
+filestem.out <- strsplit(x[length(x)],".",fixed=TRUE)[[1]][1]
+  
+# -----------------------------------------------------------------------------
 # series of function calls to be executed in C#
+# -----------------------------------------------------------------------------
 trades.csv <- get.ninja.trades(file.with.path=filename)   # NOTE filename variable has path in C#
 hms <- strsplit(strsplit(trades.csv$Exit.time[1],split=" ")[[1]][2],":")[[1]]
+# handle absence of seconds in timestamps
 if (length(hms) == 2) {
   fn <- dmy_hm
   print("--> no seconds")
@@ -33,19 +57,19 @@ if (length(hms) == 2) {
   stop("cannot parse datetime in ninjatrade file")
 }
 
-print(paste("loaded ninja trade file",filename,sep=":"))
-eod.xts <- load.eod.prices(ccy.pair,path.eod)
-toUSD.xts <- load.USD.conv(ccy.pair,path.eod)
-print(paste("loaded eod reval file",paste(path.eod,ccy.pair,sep=""),sep="  "))
+print(paste("loaded ninja trade file",filename,sep=": "))
+eod.xts <- load.eod.prices(ccy.pair, path.eod)
+toUSD.xts <- load.USD.conv(ccy.pair, path.eod)
+print(paste("loaded eod reval file", paste(path.eod, ccy.pair ,sep=""), sep=": "))
 # debug
 # print(list.dirs('.'))
 print(head(trades.csv))
 print(tail(eod.xts))
-processed <- make.daily.pnl(trades.csv,eod.xts,toUSD.xts,lfn=fn)
+processed <- make.daily.pnl(trades.csv, eod.xts, toUSD.xts, lfn=fn)
 
 print("made daily pnl")
-write.csv(processed$trades,file=paste0(path.out,filestem.out,"_processed.csv"))
-write.zoo(processed$pnl.raw,file=paste0(path.out,filestem.out,"_pnl_raw.csv"),sep=",")
+write.csv(processed$trades, file=paste0(path.out, filestem.out, "_processed.csv"))
+write.zoo(processed$pnl.raw, file=paste0(path.out, filestem.out, "_pnl_raw.csv"),sep=",")
 # daily pnl file has some special features
 pnl.daily.file <- paste0(path.out,filestem.out,"_pnl_daily.csv")
 colnames(processed$pnl.daily) <- paste("DailyPnl(USD)",ccy.pair,strategy,timeframe,strat.dir,sep="|")
