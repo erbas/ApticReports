@@ -69,6 +69,8 @@ processed <- make.daily.pnl(trades.csv, eod.xts, toUSD.xts, lfn=fn)
 print("made daily pnl")
 write.csv(processed$trades, file=paste0(path.out, filestem.out, "_processed.csv"))
 write.zoo(processed$pnl.raw, file=paste0(path.out, filestem.out, "_pnl_raw.csv"),sep=",")
+write.csv(processed$sum.daily.pnl, file=paste0(path.out, filestem.out, "_sum_daily_by_trade.csv"))
+write.csv(processed$discrepencies, file=paste0(path.out, filestem.out, "_discrepencies.csv"))
 # daily pnl file has some special features
 pnl.daily.file <- paste0(path.out,filestem.out,"_pnl_daily.csv")
 colnames(processed$pnl.daily) <- paste("DailyPnl(USD)",ccy.pair,strategy,timeframe,strat.dir,sep="|")
