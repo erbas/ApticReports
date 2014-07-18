@@ -14,18 +14,18 @@ source(paste0(path.src,"daily_PnL_v5.R"))
 #  windows debug
 # -----------------------------------------------------------------------------
 # # # hard coded paths for debug - need trailing slash
-# path.in <- "E:Model_Trades_Published Returns/Sub Strategies_Global Currency Program_Trades/Sub Strategy_CIT/Ratio/CIT SS2_553 Ratio Sell 25 bp/"
+# path.in <- "E:./././././././Cloud Data/Published Returns/Test _KT/CRNCY_Trade File_Model/Sub Strategy//CIT/CIT SS5_333 Ratio Sell 15bp_Rats 5bp/240/"
 # # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/"
-# path.eod <- "E:Data History/Revaluation rates/"
-# filename <- "BT4 AUDUSD 1440 Sells_01012010 30112013 3x.csv"
+# path.eod <- "E:././././Cloud Data/Data History/Revaluation rates/"
+# filename <- "BT2 EURAUD 240 Sells_01012010 31122013 2x.csv"
+# # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/""
 # file.with.path <- paste0(path.in,filename)
 # filestem.out <- substr(filename,start=1,stop=nchar(filename)-4)
 # filename <- file.with.path
-# #path.out <- "E:Cloud Data/Trades_NT7 Backtest/Trades_Test/"
-# path.out <- "C:/Users/Keiran/Desktop/Test/"
-# ccy.pair <- "AUDUSD"
-# strategy <- "Scryer"
-# timeframe <- "1440 min"
+# path.out <- "E:././././Cloud Data/Published Returns/Test _KT/Output/"
+# ccy.pair <- "EURUSD"
+# strategy <- "BT2"
+# timeframe <- "240 min"
 # strat.dir <- "Short"
 
 
