@@ -4,8 +4,7 @@ library(PerformanceAnalytics)
 
 if (length(grep(pattern = "apple",x = Sys.getenv("R_PLATFORM"), fixed = TRUE)) !=0) {
   path.src <- paste0(Sys.getenv("HOME"),"/Dropbox/workspace/ApticReports/R src/")
-}
-else {
+} else {
   path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/") 
 }
 print(path.src)
@@ -34,12 +33,12 @@ source(paste0(path.src,"daily_PnL_v5.R"))
 #  OS X debug
 # -----------------------------------------------------------------------------
 
-filename <- "~/Desktop/aptic/BT4 XAUUSD 1440 Buys_01042012 31122013 2x.csv"
-path.eod <- "~/Desktop/aptic/"
-ccy.pair <- "XAUUSD"
-path.out <- "~/Desktop/aptic/"
-x <- strsplit(x=filename, split="/", fixed=TRUE)[[1]]
-filestem.out <- strsplit(x[length(x)],".",fixed=TRUE)[[1]][1]
+# filename <- "~/Desktop/aptic/BT4 XAUUSD 1440 Buys_01042012 31122013 2x.csv"
+# path.eod <- "~/Desktop/aptic/"
+# ccy.pair <- "XAUUSD"
+# path.out <- "~/Desktop/aptic/"
+# x <- strsplit(x=filename, split="/", fixed=TRUE)[[1]]
+# filestem.out <- strsplit(x[length(x)],".",fixed=TRUE)[[1]][1]
   
 # -----------------------------------------------------------------------------
 # series of function calls to be executed in C#
