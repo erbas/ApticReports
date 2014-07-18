@@ -213,6 +213,7 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London"
 #     print(modified.entries[i,])
 #     print(modified.exits[i,])
     # create the synthetic daily trades
+    if (length(ref.eod) < 2) next
     for (j in 2:length(ref.eod)) {
       counter <- counter + 1
       new.trades[counter, "Entry.time"]  <- as.character( ref.eod[j-1] + as.difftime(1,units="secs") )
