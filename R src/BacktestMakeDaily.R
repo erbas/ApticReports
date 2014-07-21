@@ -14,10 +14,10 @@ source(paste0(path.src,"daily_PnL_v5.R"))
 #  windows debug
 # -----------------------------------------------------------------------------
 # # # hard coded paths for debug - need trailing slash
-# path.in <- "E:./././././././Cloud Data/Published Returns/Test _KT/CRNCY_Trade File_Model/Sub Strategy//CIT/CIT SS5_333 Ratio Sell 15bp_Rats 5bp/240/"
+# path.in <- "E:./././././././Cloud Data/Published Returns/Test _KT/"
 # # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/"
 # path.eod <- "E:././././Cloud Data/Data History/Revaluation rates/"
-# filename <- "BT2 EURAUD 240 Sells_01012010 31122013 2x.csv"
+# filename <- "BT1 EURUSD 120 Buys_01012010 07022014 3x_08 06 12_P1LB 10_SLPT P1 3x.csv"
 # # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/""
 # file.with.path <- paste0(path.in,filename)
 # filestem.out <- substr(filename,start=1,stop=nchar(filename)-4)

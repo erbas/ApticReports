@@ -191,7 +191,9 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London"
     synthetic.trade.dates[[i]] <- td
   }
   # get number of new trades and allocate data.frame
-  n.new.trades <- sum(unlist(lapply(synthetic.trade.dates, length))-1)
+  # if trade is only split once then no new trades as open and close take care of it
+  n.split.trades <- unlist(lapply(synthetic.trade.dates, length))
+  n.new.trades <- sum(n.split.trades[n.split.trades > 0] -1)
   new.trades <- as.data.frame(matrix(0, ncol=ncol(trades.raw), nrow=n.new.trades))
   colnames(new.trades) <- colnames(trades.raw)
   # only create new trades where needed
