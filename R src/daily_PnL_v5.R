@@ -241,7 +241,7 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London"
   all.trades <- cbind(all.trades, pnl)
   # raw pnl in original ccy2 whilst maintaining original entry and exit times
   pnl.raw.vals <- ifelse(trades.csv[,"Market.pos."]=='Long',1,-1)*(trades.csv[,"Exit.price"]-trades.csv[,"Entry.price"])*trades.csv[,"Quantity"]
-  time.index <- lfn(trades.csv[,'Exit.time'], tz=TZ)
+  time.index <- lfn(trades.csv[,'Entry.time'], tz=TZ)   # pnl.raw is used in BRG report on timezone
   pnl.raw.xts <- xts(pnl.raw.vals, time.index)
   # convert raw pnl to USD
   pnl.raw.usd <- pnl.raw.xts
