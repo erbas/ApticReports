@@ -1,0 +1,225 @@
+\documentclass[nohyper,justified]{tufte-handout}
+%\documentclass{article}
+%\usepackage[absolute,showboxes]{textpos}
+\usepackage[absolute]{textpos}
+\usepackage{sidecap}
+%\usepackage{color}
+%\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\begin{document}
+ 
+<<setup,eval=TRUE,echo=FALSE,results='hide',warning=FALSE,message=FALSE,error=FALSE>>=
+#do requires and set up environment for reporting
+require(quantmod)
+require(PerformanceAnalytics)
+require(xtable)
+require(corrplot)
+source("MyChartsPerformanceSummary.R")
+
+Sys.setenv(TZ = "Europe/London")
+setwd("C:/Temp/TeX_Tmp/")
+load("temp_rtns2.RData")
+@
+
+\begin{wide}
+\section{\Huge Portfolio Report: \Sexpr{filestem} }
+
+\hrulefill 
+\end{wide}
+
+\begin{textblock*}{105mm}(105mm,40mm)
+\begin{figure}
+\vspace{0pt}
+<<Performance,echo=FALSE,eval=TRUE,fig.width=4,fig.height=5>>=
+charts.PerformanceSummary(ptf.daily,geometric=F,wealth.index=F,colorset=rich6equal,main=NULL,gap=0,xlab=NULL,legend.loc="topleft",lwd=1)
+@
+\end{figure}
+\end{textblock*}
+
+% \begin{textblock*}{95mm}(10mm,134mm)
+% \begin{figure}
+% \vspace{0pt}
+% <<Performance2,echo=FALSE,eval=TRUE,fig.width=8,fig.height=3>>=
+% pnl.monthly <- period.apply(ptf.daily[,1],INDEX=endpoints(ptf.daily,'months'),FUN=sum)
+% barplot(pnl.monthly*100,main="Monthly Returns (% AUM)")
+% @
+% \end{figure}
+% \end{textblock*}
+
+
+\begin{textblock*}{75mm}(15mm,50mm)
+\Large Summary Statistics
+\normalsize
+%\newline
+\begin{figure}
+\vspace{0pt}
+<<stats,echo=FALSE,warning=FALSE,eval=TRUE,results='asis'>>=
+ABSRTN <- colSums(ptf.daily)*100
+ABSRTN.10 <- colSums(ptf.daily["2010::"])*100
+ABSRTN.11 <- colSums(ptf.daily["2011::"])*100
+ABSRTN.12 <- colSums(ptf.daily["2012::"])*100
+ABSRTN.13 <- colSums(ptf.daily["2013::"])*100
+ABSRTN.14 <- colSums(ptf.daily["2014::"])*100
+CAR <- Return.annualized(ptf.daily,scale=252,geometric=T)*100
+COR <- cor(ptf.daily)[,3]
+VOL <- apply(ptf.daily,2,sd)*sqrt(252)*100
+MAXDRAW <- maxDrawdown(ptf.daily,geometric=T)*100
+SHARPE <- SharpeRatio.annualized(ptf.daily,Rf=0.0025/252,scale=252,geometric=T)
+SORTINO <- SortinoRatio(ptf.daily)
+SKEWNESS <- skewness(ptf.daily,method="moment")
+KURTOSIS <- kurtosis(ptf.daily,method="moment")
+OMEGA <- Omega(ptf.daily,L=0)
+KELLY <- KellyRatio(ptf.daily,Rf=0)
+DRAWDNS <- table.Drawdowns(ptf.daily[,1])
+n <- min(5,max(as.integer(row.names(DRAWDNS))))
+DRAWDNS <- table.Drawdowns(ptf.daily[,1],top=n)
+#dd.newedge <- table.Drawdowns(ptf.daily[,2],top=n)
+#RECOV <- c(DRAWDNS[1,"Recovery"],dd.newedge[1,"Recovery"])
+#CONSEC <- apply(cbind(DRAWDNS[,"To Trough"],dd.newedge[,"To Trough"]),2,max)
+RECOV <- DRAWDNS[1,"Recovery"]
+
+statstable <- data.frame(rbind(ABSRTN,
+                               CAR,
+                               MAXDRAW,
+                               #RECOV,
+                               VOL,
+                               COR,
+                               SHARPE,
+#                                SORTINO,
+#                                SKEWNESS,
+#                                KURTOSIS,
+#                                OMEGA,
+#                                KELLY,
+#                                ABSRTN.10,
+#                                ABSRTN.11,
+#                                #ABSRTN.12,
+                               #ABSRTN.13,
+                               ABSRTN.14))
+row.names(statstable) <- c("Total Return (% AUM)",
+                           "Compounded Annual Return (%)",
+                           "Max Drawdown (% AUM)",
+                           #"Days to Recovery",
+                           "Annualized Volatility (%)",
+                           "Correlation with SP500 ",
+                           "Sharpe Ratio",
+                           #"Sortino Ratio",
+                           #"Skewness",
+                           #"Kurtosis",
+                           #"Omega Ratio",
+                           #"Kelly Fraction",
+                           #"Total Return since 1 Jan 2010 (% AUM)",
+                           #"Total Return since 1 Jan 2011 (% AUM)",
+                           #"Total Return since 1 Jan 2012 (% AUM)",
+                           #"Total Return since 1 Jan 2013 (% AUM)",
+                           "Total Return since 1 Jan 2014 (% AUM)")
+print(xtable(statstable,align=c('l','r','r','r')), floating=FALSE, scalebox=0.7)
+@
+\end{figure}
+
+\vspace{19mm}
+\small Drawdown Length and Recovery Times
+\normalsize
+\begin{figure}
+<<drawdn,echo=FALSE,eval=TRUE,results='asis'>>=
+cn <- colnames(DRAWDNS)
+cn[1] <- "Start"
+cn[2] <- "Trough"
+cn[3] <- "Recovery"
+cn[4] <- "Max Drawdn (%)"
+cn[5] <- "Duration"
+cn[6] <- "Days to Trough"
+cn[7] <- "Days to Recovery"
+colnames(DRAWDNS) <- cn
+row.names(DRAWDNS) <- NULL
+DRAWDNS[,4] <- DRAWDNS[,4]*100
+dts <- apply(DRAWDNS[,1:3],2,format,format="%d-%m-%Y")
+print(xtable(cbind(dts[,c(1:3)],DRAWDNS[,c(4,5)]),digits=c(0,0,0,0,2,0)),floating=FALSE, scalebox=0.7)
+@
+\end{figure}
+\end{textblock*}
+
+
+\begin{textblock*}{180mm}(15mm,160mm)
+\begin{figure}
+\vspace{0pt}
+<<voletc,echo=FALSE,warning=FALSE,eval=TRUE,fig.width=8.5,fig.height=2.5>>=
+layout(matrix(1:6,1,2),respect=FALSE)
+cex.m <- 1
+cex.lg <- 0.7
+op <-par(cex.main=0.7, cex.axis=0.7, mex=0.7)
+
+# plot rolling volatility
+n.window <- ifelse(nrow(ptf.daily)>500,252,63)
+vols <- rollapply(ptf.daily[,1],width=n.window,FUN=function(x) apply(x,2,sd),by.column=FALSE,align='right')
+vols <- vols[endpoints(vols,'months')]*sqrt(n.window)*100
+main.txt <- paste0("Volatility (rolling ",round(12*n.window/252)," month)")
+plot.zoo(vols[,1],plot.type='single',col=rich6equal,main=main.txt,xlab='',ylab='',lwd=2)
+
+# plot rolling correlation with S&P
+n.window <- ifelse(nrow(ptf.daily)>500,252,63)
+corln <- rollapply(ptf.daily,width=n.window,FUN=function(x) cor(x[,1],x[,3]),by.column=FALSE,align='right')
+corln <- corln[endpoints(corln,'months')]
+main.txt <- paste0("Correln with S&P (rolling ",round(12*n.window/252)," mth)")
+plot.zoo(corln,plot.type='single',col=rich6equal,main=main.txt,xlab='',ylab='',lwd=2)
+
+par(op)
+
+# # histogram of ptf returns
+# dat <- ptf.daily[,1]
+# rangedata <- c(min(dat),max(dat))
+# xlim <- range(rangedata)
+# s <- seq(xlim[1], xlim[2], length = 500)
+# h <- hist(dat, breaks = 25, plot = FALSE)
+# h$density <- h$counts/sum(h$counts)*100
+# plot(h,freq=F,ylab="% Trades",main = "Histogram of Portfolio Returns", xlab="Returns (% AUM)",col="darkgrey",xlim=xlim)
+# fitted.normal <- dnorm(s, mean(dat), apply(dat,2,sd))
+# lines(s, fitted.normal*max(h$density)/max(fitted.normal), col = 4, lwd = 2)
+
+# heat map of correlations between strategies
+# rtns.nolabels <- rtns.xts[,-c(1:2)]
+# colnames(rtns.nolabels) <- NULL
+# if (ncol(rtns.nolabels) < 10) {
+#   corrplot(cor(rtns.nolabels),method="number",order="AOE",type="full",tl.pos="d")
+# } else {
+#   corrplot(cor(rtns.nolabels),method="color",order="original",type="full",tl.pos="d")  
+# }
+
+# rolling correlations
+# rollCor <- function(x) {
+#   mat <- cor(x)
+#   mat[upper.tri(mat)]
+# }
+# cor.rol <- rollapplyr(rtns.nolabels,width=252,FUN=rollCor,by.column=FALSE)
+# plot.zoo(cor.rol,plot.type='single',col=rainbow(ncol(cor.rol)))
+
+@
+\end{figure}
+\end{textblock*}
+
+% \begin{textblock*}{180mm}(15mm,170mm)
+% \begin{figure}
+% \vspace{0pt}
+% <<cortable,echo=FALSE,warning=TRUE,eval=TRUE>>=
+% 
+% print(xtable(cor(rtns.xts),digits=3),floating=FALSE, scalebox=0.7)
+% @
+% \end{figure}
+% \end{textblock*}
+
+\begin{textblock*}{180mm}(15mm,210mm)
+\begin{figure}
+\vspace{0pt}
+<<Performance2,echo=FALSE,eval=TRUE,fig.width=9,fig.height=4>>=
+if (rel.rtns) {
+  my.title <- "Average Portfolio and Strategies"
+} else {
+  my.title <- "Portfolio and Strategies"
+}
+rtns.all <- cumsum(merge(ptf.daily[,1],rtns.xts[,-c(1:2)],fill=0))*100
+plot.zoo(rtns.all,plot.type='single',col=c(1,rainbow(ncol(rtns.all)-1)),main=my.title,xlab="",ylab="Annual Return (% AUM)",lwd=c(2,rep(1,ncol(rtns.xts)-2)))
+
+@
+\end{figure}
+\end{textblock*}
+
+
+\end{document}
