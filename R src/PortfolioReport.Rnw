@@ -29,7 +29,7 @@ load("temp_rtns2.RData")
 \begin{figure}
 \vspace{0pt}
 <<Performance,echo=FALSE,eval=TRUE,fig.width=4,fig.height=5>>=
-charts.PerformanceSummary(ptf.daily,geometric=F,wealth.index=F,colorset=rich6equal,main=NULL,gap=0,xlab=NULL,legend.loc="topleft")
+charts.PerformanceSummary(ptf.daily,geometric=F,wealth.index=F,colorset=rich6equal,main=NULL,gap=0,xlab=NULL,legend.loc="topleft",lwd=1)
 @
 \end{figure}
 \end{textblock*}
@@ -62,7 +62,7 @@ CAR <- Return.annualized(ptf.daily,scale=252,geometric=T)*100
 COR <- cor(ptf.daily)[,3]*100
 VOL <- apply(ptf.daily,2,sd)*sqrt(252)*100
 MAXDRAW <- maxDrawdown(ptf.daily,geometric=T)*100
-SHARPE <- SharpeRatio.annualized(ptf.daily,Rf=0,scale=252,geometric=T)
+SHARPE <- SharpeRatio.annualized(ptf.daily,Rf=0.0025/252,scale=252,geometric=T)
 SORTINO <- SortinoRatio(ptf.daily)
 SKEWNESS <- skewness(ptf.daily,method="moment")
 KURTOSIS <- kurtosis(ptf.daily,method="moment")
