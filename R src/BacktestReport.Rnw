@@ -48,7 +48,7 @@ pnl.daily2 <- enforce.daily(eod.xts,pnl.daily)
 \begin{figure}
 \vspace{0pt}
 <<Performance,echo=FALSE,eval=TRUE,fig.width=4,fig.height=5>>=
-charts.PerformanceSummary(pnl.daily2,geometric=T,wealth.index=F,colorset=rich6equal,main=NULL,gap=0,xlab=NULL)
+charts.PerformanceSummary(pnl.daily2,geometric=T,wealth.index=F,colorset=rich6equal,main=NULL,gap=0,xlab=NULL,lwd=1)
 @
 \end{figure}
 \end{textblock*}
@@ -83,13 +83,13 @@ ABSRTN.14 <- colSums(pnl.daily2["2014::"])*100
 CAR <- Return.annualized(pnl.daily2,scale=252,geometric=T)*100
 VOL <- apply(pnl.daily2,2,sd)*sqrt(252)*100
 MAXDRAW <- maxDrawdown(pnl.daily2,geometric=T)*100
-SHARPE <- SharpeRatio.annualized(pnl.daily2,Rf=0,scale=252,geometric=T)
+SHARPE <- SharpeRatio.annualized(pnl.daily2,Rf=0.0025/252,scale=252,geometric=T)
 SORTINO <- SortinoRatio(pnl.daily2)
 SKEWNESS <- skewness(pnl.daily2,method="moment")
 KURTOSIS <- kurtosis(pnl.daily2,method="moment")
 OMEGA <- Omega(pnl.daily2,L=0)
 KELLY <- KellyRatio(pnl.daily2,Rf=0)
-WINLOSS <- apply(pnl.raw,2,function(x) length(x[x>0])/length(x)*100)
+WINLOSS <- apply(pnl.raw,2,function(x) length(x[x>0])/length(x))
 n <- min(5,max(as.integer(row.names(DRAWDNS))))
 DRAWDNS <- table.Drawdowns(pnl.daily2,top=n)
 #dd.newedge <- table.Drawdowns(pnl.daily2[,2],top=n)
@@ -99,7 +99,7 @@ RECOV <- DRAWDNS[1,"Recovery"]
 runs <- rle(as.numeric(sign(pnl.raw)))
 CONSEC <- max(runs$lengths[runs$values < 0])
 
-statstable <- data.frame(rbind(ABSRTN,CAR,MAXDRAW,RECOV,CONSEC,VOL,SHARPE,SORTINO,ABSRTN.10,ABSRTN.11,ABSRTN.12,ABSRTN.13,ABSRTN.14))
+statstable <- data.frame(rbind(ABSRTN,CAR,MAXDRAW,RECOV,CONSEC,VOL,SHARPE,WINLOSS,ABSRTN.10,ABSRTN.11,ABSRTN.12,ABSRTN.13,ABSRTN.14))
 row.names(statstable) <- c("Total Return (% AUM)",
                            "Compounded Annual Return (%)",
                            "Max Drawdown (% AUM)",
@@ -107,7 +107,8 @@ row.names(statstable) <- c("Total Return (% AUM)",
                            "Max Consecutive Losing Trades",
                            "Annualized Volatility (%)",
                            "Sharpe Ratio",
-                           "Sortino Ratio",
+                           "Win/Loss Ratio",
+                           #"Sortino Ratio",
                            #"Skewness",
                            #"Kurtosis",
                            #"Omega Ratio",
