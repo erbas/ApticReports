@@ -32,6 +32,11 @@ load.eod.prices <- function(ccy.pair,path) {
   time.index <- as.POSIXct(eod.csv[,1],format="%d/%m/%Y",tz="Europe/London")
   eod.xts <- na.omit(xts(prices,time.index))
   colnames(eod.xts) <- ccy.pair
+  # catch repeated values
+  idx <- which(duplicated(index(eod.xts)))
+  if (length(idx) > 0) {
+    eod.xts <- eod.xts[-idx]
+  }
   return(eod.xts)
 }
 
