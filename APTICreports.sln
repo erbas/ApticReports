@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2012 for Windows Desktop
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BacktestReport", "BacktestReport\BacktestReport.csproj", "{DB2D0C82-38B7-4B8C-A4B8-66FD33032A9C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortfolioReport", "PortfolioReport\PortfolioReport.csproj", "{2DB62CB7-9B03-4991-92CD-2E7D72330607}"
@@ -52,7 +54,6 @@ Global
 		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
 		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{350C3BFC-06F5-4E25-AE59-83290180B774}.Debug|x86.Build.0 = Debug|Any CPU

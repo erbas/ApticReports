@@ -27,10 +27,11 @@ namespace BacktestReport
 
             // initialise R engine
             var envPath = Environment.GetEnvironmentVariable("PATH");
-            var rBinPath = @"C:\Program Files\R\R-3.0.2\bin\i386";
-            Environment.SetEnvironmentVariable("PATH", envPath + Path.PathSeparator + rBinPath);
-            engine = REngine.CreateInstance("RDotNet");
-            engine.Initialize();
+            var rBinPath = @"C:\Program Files\R\R-3.1.2\bin\i386";
+            REngine.SetEnvironmentVariables();
+//            REngine.SetEnvironmentVariables("PATH", envPath + Path.PathSeparator + rBinPath); // <-- May be omitted; the next line would call it.
+            engine = REngine.GetInstance();
+
 
             // do some initial R setup
             engine.Evaluate("Sys.setenv(TZ='Europe/London')");
@@ -38,7 +39,7 @@ namespace BacktestReport
             engine.Evaluate("library(PerformanceAnalytics)");
             engine.Evaluate("print(getwd())");
             engine.Evaluate("Sys.getenv('HOME')");
-            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
+            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/Documents/GitHub/ApticReports/R src/'))");
             engine.Evaluate("print(getwd())");
             //engine.Evaluate("print(list.files())");
         }
