@@ -25,23 +25,22 @@ namespace BacktestReport
         {
             InitializeComponent();
 
-            // initialise R engine
-            var envPath = Environment.GetEnvironmentVariable("PATH");
-            var rBinPath = @"C:\Program Files\R\R-3.1.2\bin\i386";
-            REngine.SetEnvironmentVariables();
-//            REngine.SetEnvironmentVariables("PATH", envPath + Path.PathSeparator + rBinPath); // <-- May be omitted; the next line would call it.
-            engine = REngine.GetInstance();
+            // move to directory where R scripts live
+            Directory.SetCurrentDirectory(@"C:\Users\apether\Documents\GitHub\ApticReports\R src");
 
+            // initialise R engine
+            REngine.SetEnvironmentVariables();
+            engine = REngine.GetInstance();
 
             // do some initial R setup
             engine.Evaluate("Sys.setenv(TZ='Europe/London')");
             engine.Evaluate("library(quantmod)");
             engine.Evaluate("library(PerformanceAnalytics)");
             engine.Evaluate("print(getwd())");
-            engine.Evaluate("Sys.getenv('HOME')");
-            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/Documents/GitHub/ApticReports/R src/'))");
-            engine.Evaluate("print(getwd())");
-            //engine.Evaluate("print(list.files())");
+            //engine.Evaluate("Sys.getenv('HOME')");
+            //engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/Documents/GitHub/ApticReports/R src/'))");
+            //engine.Evaluate("print(getwd())");
+            engine.Evaluate("print(list.files())");
         }
 
         private void button1_Click(object sender, EventArgs e)      // choose file dialog
@@ -138,7 +137,7 @@ namespace BacktestReport
             engine.Evaluate("rm(list=ls())");
             engine.Evaluate("gc()");
             //engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
-            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
+            //engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
             engine.Evaluate("print(getwd())");
             // pass paths into R
             // ninja trade file 
@@ -146,7 +145,7 @@ namespace BacktestReport
             CharacterVector r_input_file = engine.CreateCharacterVector(new string[] { filename });
             engine.SetSymbol("filename", r_input_file);
             // eod reval rates
-            string eod_path = "E:/Cloud Data/Data History/Revaluation rates/";
+            string eod_path = "C:/Users/apether/Desktop/Data History/Revaluation rates";
             CharacterVector r_eod_file = engine.CreateCharacterVector(new string[] { eod_path });
             engine.SetSymbol("path.eod", r_eod_file);
             // ccy pair

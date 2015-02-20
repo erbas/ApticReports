@@ -30,12 +30,13 @@ namespace PortfolioReport
             InitializeComponent();
 
             // initialise R engine
-            var envPath = Environment.GetEnvironmentVariable("PATH");
-            var rBinPath = @"C:\Program Files\R\R-3.1.2\bin\i386";
+//            var envPath = Environment.GetEnvironmentVariable("PATH");
+//            var rBinPath = @"C:\Program Files\R\R-3.1.2\bin\i386";
 //            Environment.SetEnvironmentVariable("PATH", envPath + Path.PathSeparator + rBinPath);
 //            engine = REngine.CreateInstance("RDotNet");
 //            engine.Initialize();
-            REngine.SetEnvironmentVariables("PATH", envPath + Path.PathSeparator + rBinPath); // <-- May be omitted; the next line would call it.
+//            REngine.SetEnvironmentVariables("PATH", envPath + Path.PathSeparator + rBinPath); // <-- May be omitted; the next line would call it.
+            REngine.SetEnvironmentVariables();
             engine = REngine.GetInstance();
 
             // do some initial R setup
