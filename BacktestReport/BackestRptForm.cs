@@ -26,7 +26,10 @@ namespace BacktestReport
             InitializeComponent();
 
             // move to directory where R scripts live
-            Directory.SetCurrentDirectory(@"C:\Users\apether\Documents\GitHub\ApticReports\R src");
+            Console.Write(Directory.GetCurrentDirectory());
+            Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\R Src"));
+            Console.Write(Directory.GetCurrentDirectory());
+            //@"C:\Users\apether\Documents\GitHub\ApticReports\R src");
 
             // initialise R engine
             REngine.SetEnvironmentVariables();
@@ -145,7 +148,8 @@ namespace BacktestReport
             CharacterVector r_input_file = engine.CreateCharacterVector(new string[] { filename });
             engine.SetSymbol("filename", r_input_file);
             // eod reval rates
-            string eod_path = "C:/Users/apether/Desktop/Data History/Revaluation rates";
+            string eod_path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Data History/Revaluation rates");
+            eod_path = eod_path.Replace('\\','/');
             CharacterVector r_eod_file = engine.CreateCharacterVector(new string[] { eod_path });
             engine.SetSymbol("path.eod", r_eod_file);
             // ccy pair

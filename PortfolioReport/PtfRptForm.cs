@@ -29,13 +29,13 @@ namespace PortfolioReport
         {
             InitializeComponent();
 
+            // move to directory where R scripts live
+            Console.Write(Directory.GetCurrentDirectory());
+            Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\R Src"));
+            Console.Write(Directory.GetCurrentDirectory());
+            //@"C:\Users\apether\Documents\GitHub\ApticReports\R src");
+
             // initialise R engine
-//            var envPath = Environment.GetEnvironmentVariable("PATH");
-//            var rBinPath = @"C:\Program Files\R\R-3.1.2\bin\i386";
-//            Environment.SetEnvironmentVariable("PATH", envPath + Path.PathSeparator + rBinPath);
-//            engine = REngine.CreateInstance("RDotNet");
-//            engine.Initialize();
-//            REngine.SetEnvironmentVariables("PATH", envPath + Path.PathSeparator + rBinPath); // <-- May be omitted; the next line would call it.
             REngine.SetEnvironmentVariables();
             engine = REngine.GetInstance();
 
@@ -43,8 +43,8 @@ namespace PortfolioReport
             engine.Evaluate("Sys.setenv(TZ='Europe/London')");
             engine.Evaluate("library(quantmod)");
             engine.Evaluate("library(PerformanceAnalytics)");
-            engine.Evaluate("print(getwd())");
-            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
+//            engine.Evaluate("print(getwd())");
+//            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
             engine.Evaluate("print(getwd())");
         }
 
@@ -123,8 +123,7 @@ namespace PortfolioReport
             // make sure we start in the correct directory with a clean environment
             engine.Evaluate("rm(list=ls())");
             engine.Evaluate("gc()");
-//            engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
-            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
+//            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
 
             // pass pnl files into R
             CharacterVector r_input_files = engine.CreateCharacterVector(input_files);
