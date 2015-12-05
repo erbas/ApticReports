@@ -12,8 +12,7 @@ R src/*.Rhistory
 R src/*.RData
 R src/figure
 .Rhistory
-APTICreports.sln
 .RData
 kelly_lme.R
-"Data History"/*
-"MODEL_TRADES"/*
+Data_History/*
+MODEL_TRADES/*
