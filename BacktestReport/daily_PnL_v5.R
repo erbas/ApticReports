@@ -22,7 +22,7 @@ get.ninja.trades <- function(file.with.path) {
 }
 
 # load end of day prices 
-load.eod.prices <- function(ccy.pair,path) {
+load.eod.prices <- function(ccy.pair, path) {
   filename <- paste0(path,"/",ccy.pair,"_EOD",".csv")
   eod.csv <- read.csv(filename,header=T,sep=",",strip.white=TRUE,stringsAsFactors=FALSE,skip=1)
 #   print("---> inside load.eod.prices <---")
@@ -44,7 +44,7 @@ get.strategy.name <- function(trades.csv) {
   paste(unique(lapply(sapply(trades.csv[,"Entry.name"],strsplit,"_"),function(x) x[2:3]))[[1]],collapse="_")
 }
 
-load.USD.conv <- function(ccy.pair,path,pnl.ccy="USD") {
+load.USD.conv <- function(ccy.pair, path, pnl.ccy="USD") {
   # deduce reference ccy for reporting pnl
   ccy1 <- substr(ccy.pair,1,3)
   ccy2 <- substr(ccy.pair,4,6)
@@ -155,10 +155,10 @@ get.nearest.eod <- function(x, dir=1, eod.hms) {
 # kahuna function to split trades at end-of-day to construct daily pnl series
 # -----------------------------------------------------------------------------
 
-make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London", eod.hour=17, lfn=ymdhms) {
+make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London", eod.hour=17) { #}, lfn=ymdhms) {
   # convert trade entry and exit to POSIXct objects
-  entries <- lfn(trades.csv$Entry.time, tz=TZ)
-  exits <- lfn(trades.csv$Exit.time, tz=TZ)
+  entries <- dmy_hms(trades.csv$Entry.time, tz=TZ, truncated=1)
+  exits <- dmy_hms(trades.csv$Exit.time, tz=TZ, truncated=1)
   eod.hms <- add.time.to.date(eod.xts, eod.hour, TZ)  
   indexTZ(eod.hms) <- TZ
   # ignore trades closing after last eod price
@@ -245,7 +245,7 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London"
   all.trades <- cbind(all.trades, pnl)
   # raw pnl in original ccy2 whilst maintaining original entry and exit times
   pnl.raw.vals <- ifelse(trades.csv[,"Market.pos."]=='Long',1,-1)*(trades.csv[,"Exit.price"]-trades.csv[,"Entry.price"])*trades.csv[,"Quantity"]
-  time.index <- lfn(trades.csv[,'Entry.time'], tz=TZ)   # pnl.raw is used in BRG report on timezone
+  time.index <- dmy_hms(trades.csv[,'Entry.time'], tz=TZ, truncated=1)   # pnl.raw is used in BRG report on timezone
   pnl.raw.xts <- xts(pnl.raw.vals, time.index)
   # convert raw pnl to USD
   pnl.raw.usd <- pnl.raw.xts
