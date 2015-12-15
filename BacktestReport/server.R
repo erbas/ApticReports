@@ -1,25 +1,24 @@
 library(shiny)
 library(shinyFiles)
-
+options(warn = 2)
 source("Unreactive_BacktestMakeDaily.R")
 
 shinyServer(function(input, output, session) {
   
-  volumes <- c(Data_History="/Users/keiran/Dropbox/workspace/ApticReports/Data_History", 
-               Desktop='/Users/keiran/Desktop')
+  reval_default <- c(Data_History="/Users/keiran/Dropbox/workspace/ApticReports/Data_History")
+  output_default <- c(Desktop='/Users/keiran/Desktop')
   
-  shinyDirChoose(input, 'reval_path', roots=volumes, session=session, restrictions=system.file(package='base'))
-
-  shinyDirChoose(input, 'output_path', roots=volumes, session=session, restrictions=system.file(package='base'))
+  shinyDirChoose(input, 'reval_path', roots=reval_default, session=session, restrictions=system.file(package='base'))
+  shinyDirChoose(input, 'output_path', roots=output_default, session=session, restrictions=system.file(package='base'))
   
   output$reval_path <- renderPrint({
     if (is.null(input$reval_path)) return(invisible())
-    parseDirPath(volumes, input$reval_path)
+    normalizePath(parseDirPath(reval_default, input$reval_path))
   })
   
   output$output_path <- renderPrint({
     if (is.null(input$output_path)) return(invisible())
-    parseDirPath(volumes, input$output_path)
+    normalizePath(parseDirPath(output_default, input$output_path))
   })
   
   
@@ -27,12 +26,15 @@ shinyServer(function(input, output, session) {
     if (input$goButton == 0 || is.null(input$ninja_files)) return(invisible())
     
     ff <- isolate(input$ninja_files)
+    print(ff)
     
-    reval_path <- parseDirPath(volumes, input$reval_path)
+    reval_path <- normalizePath(parseDirPath(reval_default, input$reval_path))
+    output_path <- normalizePath(parseDirPath(output_default, input$output_path))
 
     for (i in 1:nrow(ff)) {
-      filename <- ff$datapath[i]
-      info <- load.and.process(filename, reval_path, input$aum)
+      filename <- ff$name[i]
+      input_file <- ff$datapath[i]
+      info <- load.and.process(filename, input_file, reval_path, output_path, input$aum)
       do.knitting(filename)
     }
   })
