@@ -34,19 +34,10 @@ shinyServer(function(input, output, session) {
     for (i in 1:nrow(ff)) {
       filename <- ff$name[i]
       input_file <- ff$datapath[i]
-      info <- load.and.process(filename, input_file, reval_path, output_path, input$aum)
-      do.knitting(filename)
+      info <- load.and.process(filename, input_file, reval_path, output_path, input$aum, input$strategy_name, input$timeframe)
+      do.knitting(filename, output_path)
     }
   })
   
-  
-  #   report <- reactive({
-  # #     for (f in input$ninja_files) {
-  # #       info = GetCurrencyAndDirection(f)
-  # #       ccy_pair <- info[1]
-  #       # X <- MakeReport(input_file, ccy_pair, direction, path_out, strategy, time_frame)
-  #       
-  #     }
-  #   })
   
 })

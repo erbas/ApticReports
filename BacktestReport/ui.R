@@ -14,7 +14,7 @@ shinyUI(pageWithSidebar(
     shinyDirButton('output_path', 'Output Directory', 'Please select a folder'),
     verbatimTextOutput('output_path'),
     tags$hr(),  
-
+    
     numericInput('aum',"AUM",value=10^8, min=1, max=10^10),
     dateRangeInput('date_range', "Date Range", start="2010-01-01", end="2015-12-01"),
     textInput('strategy_name','Strategy Name',value = "CIT1"),
@@ -25,6 +25,7 @@ shinyUI(pageWithSidebar(
   ),
   
   mainPanel(
-    tableOutput('log')
+    tabPanel("Log", tableOutput('log')
+    )
   )
 ))
