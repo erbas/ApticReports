@@ -23,7 +23,7 @@ namespace PortfolioReport
         bool relative_returns = false;
         bool ptf_of_ptf = false;
         DateTime date_start = new DateTime(2006,1,1); 
-        DateTime date_end = new DateTime(2013, 6, 30);
+        DateTime date_end = new DateTime(2014, 12, 31);
 
         public PortfolioReportForm()
         {
@@ -31,9 +31,8 @@ namespace PortfolioReport
 
             // move to directory where R scripts live
             Console.Write(Directory.GetCurrentDirectory());
-            Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\R Src"));
+            Directory.SetCurrentDirectory(Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), @"..\..\..\R Src"));
             Console.Write(Directory.GetCurrentDirectory());
-            //@"C:\Users\apether\Documents\GitHub\ApticReports\R src");
 
             // initialise R engine
             REngine.SetEnvironmentVariables();
@@ -86,6 +85,7 @@ namespace PortfolioReport
 
         private void button5_Click(object sender, EventArgs e)  // quit
         {
+            engine.Dispose();
             Application.Exit();
         }
 
@@ -120,10 +120,14 @@ namespace PortfolioReport
 
         private void MakePtfReport(string[] input_files, string path_out, string report_name)
         {
+            Console.Write(Directory.GetCurrentDirectory());
+            Directory.SetCurrentDirectory(Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), @"..\..\..\R Src"));
+            Console.Write(Directory.GetCurrentDirectory());
+
             // make sure we start in the correct directory with a clean environment
             engine.Evaluate("rm(list=ls())");
             engine.Evaluate("gc()");
-//            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
+            engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/ApticReports/R src/'))");
 
             // pass pnl files into R
             CharacterVector r_input_files = engine.CreateCharacterVector(input_files);

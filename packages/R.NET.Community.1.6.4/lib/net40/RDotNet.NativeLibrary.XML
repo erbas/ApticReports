@@ -54,6 +54,12 @@
             <param name="rPath">Optional path to the directory containing the R shared library. This is ignored unless on a Unix platform (i.e. ignored on Windows and MacOS)</param>
             <returns>The path that R.NET found suitable as a candidate for the R_HOME environment</returns>
         </member>
+        <member name="M:RDotNet.NativeLibrary.NativeUtility.GetRVersionFromRegistry">
+            <summary>
+            Gets the R version from the Windows R Registry (if available)
+            </summary>
+            <returns>a System.Version object</returns>
+        </member>
         <member name="M:RDotNet.NativeLibrary.NativeUtility.FindRPath(System.String)">
             <summary>
             Attempt to find a suitable path to the R shared library. This is used by R.NET by default; users may want to use it to diagnose problematic behaviors.
@@ -71,6 +77,11 @@
             Gets the default file name of the R library on the supported platforms.
             </summary>
             <returns>R dll file name</returns>
+        </member>
+        <member name="P:RDotNet.NativeLibrary.NativeUtility.SetEnvironmentVariablesLog">
+            <summary>
+            Gets a log of the changes made to environment variables via the NativeUtility
+            </summary>
         </member>
         <member name="P:RDotNet.NativeLibrary.NativeUtility.IsUnix">
             <summary>

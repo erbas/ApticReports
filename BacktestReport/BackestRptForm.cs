@@ -29,7 +29,6 @@ namespace BacktestReport
             Console.Write(Directory.GetCurrentDirectory());
             Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), @"..\..\..\R Src"));
             Console.Write(Directory.GetCurrentDirectory());
-            //@"C:\Users\apether\Documents\GitHub\ApticReports\R src");
 
             // initialise R engine
             REngine.SetEnvironmentVariables();
@@ -40,9 +39,6 @@ namespace BacktestReport
             engine.Evaluate("library(quantmod)");
             engine.Evaluate("library(PerformanceAnalytics)");
             engine.Evaluate("print(getwd())");
-            //engine.Evaluate("Sys.getenv('HOME')");
-            //engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/Documents/GitHub/ApticReports/R src/'))");
-            //engine.Evaluate("print(getwd())");
             engine.Evaluate("print(list.files())");
         }
 
@@ -94,6 +90,7 @@ namespace BacktestReport
 
         private void button5_Click(object sender, EventArgs e)  // quit
         {
+            engine.Dispose();
             Application.Exit();
         }
 
@@ -137,18 +134,18 @@ namespace BacktestReport
         private void MakeReport(string input_file, string ccy_pair, string direction, string path_out, string strategy, string time_frame)
         {
             // make sure we start in the correct directory with a clean slate
+            Directory.SetCurrentDirectory(Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), @"..\..\..\R Src"));
             engine.Evaluate("rm(list=ls())");
             engine.Evaluate("gc()");
-            //engine.Evaluate("setwd('C:/Users/Keiran/Documents/Backtest_Source/R')");
-            //engine.Evaluate("setwd(paste0(Sys.getenv('HOME'),'/GitRepo/ApticReports/R src/'))");
             engine.Evaluate("print(getwd())");
+
             // pass paths into R
             // ninja trade file 
             string filename = input_file.Replace(@"\", "/");
             CharacterVector r_input_file = engine.CreateCharacterVector(new string[] { filename });
             engine.SetSymbol("filename", r_input_file);
             // eod reval rates
-            string eod_path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Data History/Revaluation rates");
+            string eod_path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Data History/Revaluation rates/");
             eod_path = eod_path.Replace('\\','/');
             CharacterVector r_eod_file = engine.CreateCharacterVector(new string[] { eod_path });
             engine.SetSymbol("path.eod", r_eod_file);
@@ -180,7 +177,8 @@ namespace BacktestReport
             engine.Evaluate("print(timeframe)");
             engine.Evaluate("print(path.eod)");
             engine.Evaluate("print(path.out)");
-            engine.Evaluate("print(filestem.out)"); 
+            engine.Evaluate("print(filestem.out)");
+            engine.Evaluate("print(getwd())");
 
             // 3. run R script to make daily pnl
             engine.Evaluate("source('BacktestMakeDaily.R')");
