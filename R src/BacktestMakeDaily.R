@@ -5,30 +5,29 @@ library(PerformanceAnalytics)
 if (length(grep(pattern = "apple",x = Sys.getenv("R_PLATFORM"), fixed = TRUE)) !=0) {
   path.src <- paste0(Sys.getenv("HOME"),"/Dropbox/workspace/ApticReports/R src/")
 } else {
-  path.src <- paste0(Sys.getenv("HOME"),"/GitRepo/ApticReports/R src/") 
+  path.src <- paste0(Sys.getenv("HOME"),"/ApticReports/R src/") 
 }
+
 print(path.src)
 source(paste0(path.src,"daily_PnL_v5.R"))
 
-# -----------------------------------------------------------------------------
-#  windows debug
-# -----------------------------------------------------------------------------
-# # # hard coded paths for debug - need trailing slash
-# #path.in <- "E:./././././././Cloud Data/Published Returns/Test _KT/"
-# path.in <- 'C:/Users//Keiran/Desktop/KT test GM/'
+# # -----------------------------------------------------------------------------
+# #  windows debug
+# # -----------------------------------------------------------------------------
+# # hard coded paths for debug - need trailing slash
+# path.in <- 'C:/Users/apether/Desktop/MODEL_TRADES/CMDTY_Trade File_Model/Gold/CIT/Ratio/CIT SS2_555 Ratio 25bp_Rats 12 5bp/Buys/'
 # # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/"
-# path.eod <- "E:././././Cloud Data/Data History/Revaluation rates/"
+# path.eod <- "C:/Users/apether/Desktop/Data History/Revaluation rates/"
 # #filename <- "BT1 EURUSD 120 Buys_01012010 07022014 3x_08 06 12_P1LB 10_SLPT P1 3x.csv"
-# filename <- 'GlobalMarketsSPI 1_1_2010 - 7_23_2014.csv'
-# # path.in <- "C:/Users/Keiran/Desktop/Kt BAckTests/""
+# filename <- 'BT4 XAUUSD 1440 Buys_01042012 30092014 2x.csv'
 # file.with.path <- paste0(path.in,filename)
 # filestem.out <- substr(filename,start=1,stop=nchar(filename)-4)
 # filename <- file.with.path
-# path.out <- "E:././././Cloud Data/Published Returns/Test _KT/Output/"
-# ccy.pair <- "EURUSD"
+# path.out <- "C:/Temp/"
+# ccy.pair <- "XAUUSD"
 # strategy <- "BT2"
 # timeframe <- "240 min"
-# strat.dir <- "Short"
+# strat.dir <- "Long"
 
 
 # -----------------------------------------------------------------------------
