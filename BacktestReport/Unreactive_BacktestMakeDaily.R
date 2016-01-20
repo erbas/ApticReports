@@ -90,11 +90,15 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
 library(knitr)
 
 do.knitting <- function(filename, directory) {
+  print("=== in do.knitting ===")
+  print(getwd())
   
   # move files around
   wd <- getwd()
   file.copy(from="BacktestReport.Rnw", to=directory, overwrite = TRUE)
   setwd(directory)
+  
+  print(getwd())
   
   filestem.out <- str_replace(last(str_split(filename, "/")[[1]]), ".csv","")
   
@@ -102,23 +106,28 @@ do.knitting <- function(filename, directory) {
   opts_chunk$set(echo=FALSE, concordance=TRUE)
   
   ### Create a file name for the output file
-  onepagereport <- paste0(directory, "/", filestem.out,".tex")
+  # onepagereport <- paste0(directory, "\\", filestem.out,".tex")
+  onepagereport <- paste0(filestem.out,".tex")
   print("TeX file and pdf file:")
   print(filestem.out)
   print(onepagereport)
-  
+  print(list.files())
+
   ### Run knitr on the .Rnw file to produce a .tex file
-  path.to.result <- knit("BacktestReport.Rnw",output=onepagereport)
-  
+  path.to.result <- knit("BacktestReport.Rnw", output=onepagereport)
+
   # handle bug that means spaces in filenames break latex2pdf
   if (grepl(" ",onepagereport)) {
     safe_report_name <- str_replace_all(onepagereport, " ", "_")
     file.copy(onepagereport, safe_report_name)
   }
   
-  ### Run texi2pdf on the .tex file within R or process it from your latex system
-  tryCatch(tools::texi2pdf(safe_report_name), error=function(e) print(e), finally=traceback())
+  print(list.files())
   
+  ### Run texi2pdf on the .tex file within R or process it from your latex system
+  # tryCatch(tools::texi2pdf(safe_report_name), error=function(e) print(e), finally=traceback())
+  shell(paste0("pdflatex ",safe_report_name))
+
   # set wd back
   setwd(wd)
 }

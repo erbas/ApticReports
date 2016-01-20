@@ -16,7 +16,7 @@ shinyUI(pageWithSidebar(
     tags$hr(),  
     
     numericInput('aum',"AUM",value=10^8, min=1, max=10^10),
-    dateRangeInput('date_range', "Date Range", start="2010-01-01", end="2015-12-01"),
+    dateRangeInput('date_range', "Date Range", start="2015-01-01", end="2015-12-31"),
     textInput('strategy_name','Strategy Name',value = "CIT1"),
     selectInput('timeframe','TimeFrame',
                 choices = c('15 min','30 min','60 min','120 min','240 min','1440 min'), 
