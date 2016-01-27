@@ -68,7 +68,7 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   # daily pnl file has some special features
   pnl.daily.file <- paste0(output.path, "/", filestem.out, "_pnl_daily.csv")
   colnames(processed$pnl.daily) <- paste("DailyPnl(USD)", ccy.pair, strategy, timeframe, strat.dir, sep="|")
-  write.zoo(processed$pnl.daily,file=pnl.daily.file,sep=",")
+  write.zoo(processed$pnl.daily, file=pnl.daily.file,sep=",")
   print("wrote log files")
   
   
@@ -79,7 +79,8 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   pnl.daily[is.na(pnl.daily)] <- 0
   pnl.raw <- processed$pnl.raw
   
-  save(trades.csv,processed,eod.xts,toUSD.xts,pnl.daily,pnl.raw,AUM,filestem.out,ccy.pair,strategy,timeframe,strat.dir,output.path,
+  save(trades.csv, processed, eod.xts, toUSD.xts, pnl.daily, pnl.raw, AUM, filestem.out, ccy.pair, strategy,
+       timeframe, strat.dir, output.path,
        file=paste0(output.path, "/temp_pnl.RData"))
   print("saved temp_pnl.RData")
 }
