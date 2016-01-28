@@ -80,6 +80,7 @@ ABSRTN.11 <- colSums(pnl.daily2["2011::"])*100
 ABSRTN.12 <- colSums(pnl.daily2["2012::"])*100
 ABSRTN.13 <- colSums(pnl.daily2["2013::"])*100
 ABSRTN.14 <- colSums(pnl.daily2["2014::"])*100
+ABSRTN.14 <- colSums(pnl.daily2["2015::"])*100
 CAR <- Return.annualized(pnl.daily2,scale=252,geometric=T)*100
 VOL <- apply(pnl.daily2,2,sd)*sqrt(252)*100
 MAXDRAW <- maxDrawdown(pnl.daily2,geometric=T)*100
