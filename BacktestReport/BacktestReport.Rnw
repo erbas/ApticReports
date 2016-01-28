@@ -37,12 +37,12 @@ enforce.daily <- function(ref,pnl) {
 pnl.daily2 <- enforce.daily(eod.xts,pnl.daily)
 @
 
-\begin{wide}
-\section{\Huge \Sexpr{strategy} : \Sexpr{ccy.pair} : \Sexpr{timeframe} : \Sexpr{strat.dir}}
-{\Large Trades file: \verb+\Sexpr{filestem.out}+ }
+\begin{fullwidth}
+\item{\Huge \Sexpr{strategy} : \Sexpr{ccy.pair} : \Sexpr{timeframe} : \Sexpr{strat.dir}}
+\item{\Large Trades file: \verb+\Sexpr{filestem.out}+ }
 
+\end{fullwidth}
 \hrulefill 
-\end{wide}
 
 \begin{textblock*}{118mm}(105mm,46mm)
 \begin{figure}

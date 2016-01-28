@@ -1,6 +1,6 @@
 library(shiny)
 library(shinyFiles)
-options(warn = 2)
+# options(warn = 2)
 source("Unreactive_BacktestMakeDaily.R")
 
 shinyServer(function(input, output, session) {
