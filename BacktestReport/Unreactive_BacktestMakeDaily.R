@@ -32,7 +32,7 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   # NOTE: filename is real name of tradefile, input_file is path to temporary file on server
   
   # load trade file
-  trades.csv <- get.ninja.trades(file.with.path=input_file)   # NOTE filename variable has path in C#
+  trades.csv <- get.ninja.trades(file.with.path=input_file)   
   print(paste("loaded ninja trade file",filename,sep=": "))
   
   # determine currency pair and direction

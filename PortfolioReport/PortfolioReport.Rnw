@@ -15,12 +15,13 @@ require(xtable)
 require(corrplot)
 
 Sys.setenv(TZ = "Europe/London")
-setwd("C:/Temp/TeX_Tmp/")
-load("temp_rtns2.RData")
+path <- paste0(Sys.getenv("HOME"),"/Desktop/Temp/")
+load(paste0(path, "temp_rtns.RData"))
+# load("temp_rtns.RData")
 @
 
 \begin{wide}
-\section{\Huge Portfolio Report: \Sexpr{filestem} }
+\section{\Huge Portfolio Report: \Sexpr{report.name} }
 
 \hrulefill 
 \end{wide}
@@ -194,7 +195,7 @@ if (rel.rtns) {
 } else {
   my.title <- "Portfolio and Strategies"
 }
-rtns.all <- cumsum(merge(ptf.daily[,1],rtns.xts[,-c(1:2)],fill=0))*100
+rtns.all <- cumsum(merge(ptf.daily[,1],rtns.xts[,-c(1:2)],all = FALSE))*100
 plot.zoo(rtns.all,plot.type='single',col=c(1,rainbow(ncol(rtns.all)-1)),main=my.title,xlab="",ylab="Annual Return (% AUM)",lwd=c(2,rep(1,ncol(rtns.xts)-2)))
 
 @
