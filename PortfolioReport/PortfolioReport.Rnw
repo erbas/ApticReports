@@ -60,6 +60,7 @@ ABSRTN.11 <- colSums(ptf.daily["2011::"])*100
 ABSRTN.12 <- colSums(ptf.daily["2012::"])*100
 ABSRTN.13 <- colSums(ptf.daily["2013::"])*100
 ABSRTN.14 <- colSums(ptf.daily["2014::"])*100
+ABSRTN.15 <- colSums(ptf.daily["2015::"])*100
 CAR <- Return.annualized(ptf.daily,scale=252,geometric=T)*100
 COR <- cor(ptf.daily)[,3]*100
 VOL <- apply(ptf.daily,2,sd)*sqrt(252)*100
@@ -78,7 +79,7 @@ DRAWDNS <- table.Drawdowns(ptf.daily[,1],top=n)
 #CONSEC <- apply(cbind(DRAWDNS[,"To Trough"],dd.newedge[,"To Trough"]),2,max)
 RECOV <- DRAWDNS[1,"Recovery"]
 
-statstable <- data.frame(rbind(ABSRTN,CAR,MAXDRAW,RECOV,VOL,COR,SHARPE,SORTINO,SKEWNESS,KURTOSIS,OMEGA,KELLY,ABSRTN.10,ABSRTN.11,ABSRTN.12,ABSRTN.13,ABSRTN.14))
+statstable <- data.frame(rbind(ABSRTN,CAR,MAXDRAW,RECOV,VOL,COR,SHARPE,SORTINO,SKEWNESS,KURTOSIS,OMEGA,KELLY,ABSRTN.10,ABSRTN.11,ABSRTN.12,ABSRTN.13,ABSRTN.14,ABSRTN.15))
 row.names(statstable) <- c("Total Return (% AUM)",
                            "Compounded Annual Return (%)",
                            "Max Drawdown (% AUM)",
@@ -95,7 +96,8 @@ row.names(statstable) <- c("Total Return (% AUM)",
                            "Total Return since 1 Jan 2011 (% AUM)",
                            "Total Return since 1 Jan 2012 (% AUM)",
                            "Total Return since 1 Jan 2013 (% AUM)",
-                           "Total Return since 1 Jan 2014 (% AUM)")
+                           "Total Return since 1 Jan 2014 (% AUM)",
+                           "Total Return since 1 Jan 2015 (% AUM)")
 print(xtable(statstable,align=c('l','r','r','r')), floating=FALSE, scalebox=0.7)
 @
 \end{figure}

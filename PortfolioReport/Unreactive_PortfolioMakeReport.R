@@ -131,7 +131,7 @@ load_and_process <- function(filenames, index.path, output_path, AUM, report.nam
   write.zoo(ptf.monthly, file=paste0(report.name,"_pnl_monthly.csv"),sep=",")
   write.zoo(ptf.daily[,1], file=paste0(report.name,"_only_pnl_daily.csv"),sep=",")
 
-  save(filenames,rtns.xts,meta.data,AUM,ptf.daily,ptf.monthly,report.name,path.out,rel.rtns, file="temp_rtns.RData")
+  save(filenames,rtns.xts,meta.data,AUM,ptf.daily,ptf.monthly,report.name,rel.rtns, file="temp_rtns.RData")
   print("saved temp_rtns.RData")
   
   setwd(old.dir)
