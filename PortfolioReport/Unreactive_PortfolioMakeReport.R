@@ -27,10 +27,10 @@ load_and_process <- function(filenames, index.path, output_path, AUM, report.nam
   #load benchmark files
   # index.path <- "E:/Cloud Data/Data History/Benchmarks Indices/Other/"
   print(paste0("index.path = ", index.path))
-  index.file <- paste0(index.path, "/", "NewEdge_CTA_Historical.csv")
+  index.file <- normalizePath(paste0(index.path,"\\","NewEdge_CTA_Historical.csv"))
   new.edge.csv <- read.csv(index.file, header=F, stringsAsFactors=F)
   vals <- as.numeric(strsplit(new.edge.csv[,2],"%"))/100
-  new.edge.xts <- xts(vals, mdy(new.edge.csv[,1]))
+  new.edge.xts <- xts(vals, dmy(new.edge.csv[,1]))
   new.edge.xts <- na.omit(new.edge.xts)
   colnames(new.edge.xts) <- "NewEdge CTA Index"
   print("loaded NewEdge file")
@@ -124,7 +124,8 @@ load_and_process <- function(filenames, index.path, output_path, AUM, report.nam
   # print("loaded treasury rate data")
   
   old.dir <- getwd()
-  setwd(paste0(Sys.getenv("HOME"),"/Desktop/Temp/"))
+  # setwd(paste0(Sys.getenv("HOME"),"/Desktop/Temp/"))
+  setwd("C:\\Users\\Andrew Pether\\Documents\\Temp")
   
   write.zoo(ptf.daily, file=paste0(report.name,"_pnl_daily.csv"),sep=",")
   write.zoo(ptf.monthly, file=paste0(report.name,"_pnl_monthly.csv"),sep=",")
@@ -141,7 +142,8 @@ library(knitr)
 do.knitting <- function(report.name, output.path) {
   
   src.dir <- getwd()
-  setwd(paste0(Sys.getenv("HOME"),"/Desktop/Temp/"))
+  # setwd(paste0(Sys.getenv("HOME"),"/Desktop/Temp/"))
+  setwd("C:\\Users\\Andrew Pether\\Documents\\Temp")
   
   ### Set knitr options
   opts_chunk$set(echo=FALSE, concordance=TRUE)

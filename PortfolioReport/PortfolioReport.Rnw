@@ -15,8 +15,9 @@ require(xtable)
 require(corrplot)
 
 Sys.setenv(TZ = "Europe/London")
-path <- paste0(Sys.getenv("HOME"),"/Desktop/Temp/")
-load(paste0(path, "temp_rtns.RData"))
+# path <- paste0(Sys.getenv("HOME"),"/Desktop/Temp/")
+r_data_file <- normalizePath(paste0("C:\\Users\\Andrew Pether\\Documents\\Temp\\","temp_rtns.RData"))
+load(r_data_file)
 # load("temp_rtns.RData")
 @
 

@@ -5,7 +5,8 @@ source("Unreactive_PortfolioMakeReport.R")
 
 shinyServer(function(input, output, session) {
   
-  output_default <- c(Temp=paste0(Sys.getenv("HOME"),"/Desktop/Temp"))
+  # output_default <- c(Temp=paste0(Sys.getenv("HOME"),"/Desktop/Temp"))
+  output_default <- c(Temp="C:\\Users\\Andrew Pether\\Documents\\Temp")
   shinyDirChoose(input, 'output_path', roots=output_default, session=session, restrictions=system.file(package='base'))
   
   output$output_path <- renderPrint({
@@ -13,7 +14,8 @@ shinyServer(function(input, output, session) {
     normalizePath(parseDirPath(output_default, input$output_path))
   })
   
-  index_default <- c(Other=paste0(Sys.getenv("HOME"),'/Dropbox/workspace/ApticReports/Data_History/Benchmarks Indices/Other'))
+  # index_default <- c(Other=paste0(Sys.getenv("HOME"),'/Data_History/Benchmarks Indices'))
+  index_default <- c(Other="C:\\Users\\Andrew Pether\\Documents\\Data History\\Benchmarks Indices")
   shinyDirChoose(input, 'index_path', roots=index_default, session=session, restrictions=system.file(package='base'))
   
   output$index_path <- renderPrint({
