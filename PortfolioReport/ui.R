@@ -20,7 +20,7 @@ shinyUI(pageWithSidebar(
     tags$hr(),  
     
     numericInput('aum',"AUM",value=10^8, min=1, max=10^10),
-    checkboxInput('rel_returns', "Relative returns? (False=sum, True=average pnls)", value=FALSE),
+    checkboxInput('rel_returns', "Relative returns? (False=sum of cash pnls, True=average of % pnls)", value=FALSE),
     checkboxInput('ptf_ptf', "Portfolio of Portfolios?", value=FALSE),
     dateRangeInput('date_range', "Date Range", start="2015-01-01", end="2015-12-31"),
     actionButton("goButton", "Go", icon("fire"))
