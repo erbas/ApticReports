@@ -78,6 +78,7 @@ DRAWDNS <- table.Drawdowns(ptf.daily[,1],top=n)
 #RECOV <- c(DRAWDNS[1,"Recovery"],dd.newedge[1,"Recovery"])
 #CONSEC <- apply(cbind(DRAWDNS[,"To Trough"],dd.newedge[,"To Trough"]),2,max)
 RECOV <- DRAWDNS[1,"Recovery"]
+if (is.na(RECOV)) RECOV <- -1
 
 statstable <- data.frame(rbind(ABSRTN,CAR,MAXDRAW,RECOV,VOL,COR,SHARPE,SORTINO,SKEWNESS,KURTOSIS,OMEGA,KELLY,ABSRTN.10,ABSRTN.11,ABSRTN.12,ABSRTN.13,ABSRTN.14,ABSRTN.15))
 row.names(statstable) <- c("Total Return (% AUM)",
