@@ -36,7 +36,7 @@ shinyServer(function(input, output, session) {
     for (i in 1:nrow(ff)) {
       filename <- ff$name[i]
       input_file <- ff$datapath[i]
-      info <- load.and.process(filename, input_file, reval_path, output_path, input$aum, input$strategy_name, input$timeframe)
+      info <- load.and.process(filename, input_file, reval_path, output_path, input$aum, input$strategy_name, input$timeframe, input$futures_contract, input$futures_pt_value)
       do.knitting(filename, output_path)
     }
   })
