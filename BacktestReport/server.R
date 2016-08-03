@@ -5,10 +5,11 @@ source("Unreactive_BacktestMakeDaily.R")
 
 shinyServer(function(input, output, session) {
   
-  reval_default <- c(Data_History="/Users/keiran/Dropbox/workspace/ApticReports/Data_History")
-  output_default <- c(Desktop='/Users/keiran/Desktop')
-  # reval_default <- c(Data_History="C:\\Users\\Andrew Pether\\Documents\\Data History\\Revaluation rates")
-  # output_default <- c(Desktop="C:\\Users\\Andrew Pether\\Documents")
+  # debug - hard code the parent folders (because widgets)
+  # reval_default <- c(Data_History="/Users/keiran/Dropbox/workspace/ApticReports/Data_History")
+  # output_default <- c(Desktop='/Users/keiran/Desktop')
+  reval_default <- c(Data_History="C:\\Users\\Andrew Pether\\Documents\\Data History\\Revaluation rates")
+  output_default <- c(Desktop="C:\\Users\\Andrew Pether\\Documents")
   
   shinyDirChoose(input, 'reval_path', roots=reval_default, session=session, restrictions=system.file(package='base'))
   shinyDirChoose(input, 'output_path', roots=output_default, session=session, restrictions=system.file(package='base'))
