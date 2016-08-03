@@ -160,8 +160,8 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, trade.TZ, ref.TZ="
   entries <- dmy_hms(trades.csv$Entry.time, tz=trade.TZ, truncated=1)
   exits <- dmy_hms(trades.csv$Exit.time, tz=trade.TZ, truncated=1)
   # coerce everything to reference timezone
-  indexTZ(entries) <- ref.TZ
-  indexTZ(exits) <- ref.TZ
+  tz(entries) <- ref.TZ
+  tz(exits) <- ref.TZ
   eod.hms <- add.time.to.date(eod.xts, eod.hour, ref.TZ)  
   indexTZ(eod.hms) <- ref.TZ
   # ignore trades closing after last eod price
@@ -248,7 +248,7 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, trade.TZ, ref.TZ="
   all.trades <- cbind(all.trades, pnl)
   # raw pnl in original ccy2 whilst maintaining original entry and exit times
   pnl.raw.vals <- ifelse(trades.csv[,"Market.pos."]=='Long',1,-1)*(trades.csv[,"Exit.price"]-trades.csv[,"Entry.price"])*trades.csv[,"Quantity"]
-  time.index <- dmy_hms(trades.csv[,'Entry.time'], tz=TZ, truncated=1)   # pnl.raw is used in BRG report on timezone
+  time.index <- dmy_hms(trades.csv[,'Entry.time'], tz=ref.TZ, truncated=1)   # pnl.raw is used in BRG report on timezone
   pnl.raw.xts <- xts(pnl.raw.vals, time.index)
   # convert raw pnl to USD
   pnl.raw.usd <- pnl.raw.xts
@@ -257,7 +257,7 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, trade.TZ, ref.TZ="
     pnl.raw.usd[i] <- pnl.raw.usd[i]*coredata(conv.rate)
   }
   # clean up exit times so they align with official end-of-day
-  all.exit.times <- ymd_hms(all.trades[,"Exit.time"], tz = TZ)
+  all.exit.times <- ymd_hms(all.trades[,"Exit.time"], tz = ref.TZ)
   eod.exit.times <- all.exit.times
   for (i in 1:length(all.exit.times)) {
     eod.exit.times[i] <- get.nearest.eod(all.exit.times[i], dir=1, eod.hms)  
@@ -273,7 +273,7 @@ make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, trade.TZ, ref.TZ="
   pnl.lt <- convertIndex(pnl.daily.usd,"POSIXlt")
   ix <- index(pnl.lt) 
   ix$hour <- rep(0,length(ix))  # turns datetime index into a date index (sorta kinda)
-  pnl.daily.usd <- xts(coredata(pnl.lt),as.POSIXct(ix,tz=TZ))
+  pnl.daily.usd <- xts(coredata(pnl.lt),as.POSIXct(ix,tz=ref.TZ))
   # sanity check
   sum.daily.pnl <- aggregate(pnl ~ TradeID, data=all.trades, sum)
   discrepencies <- which(abs(sum.daily.pnl$pnl - coredata(pnl.raw.usd)) > 1.e-8)
