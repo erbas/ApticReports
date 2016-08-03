@@ -28,7 +28,8 @@ source("daily_PnL_v5.R")
 # Wrapper function to load and process one file
 # -----------------------------------------------------------------------------
 
-load.and.process <- function(filename, input_file, reval.path, output.path, AUM, strategy, timeframe, is_future, pt_value, timezone) {
+load.and.process <- function(filename, input_file, reval.path, output.path, AUM, strategy, timeframe, 
+                             is_future, pt_value, timezone) {
   # NOTE: filename is real name of tradefile, input_file is path to temporary file on server
   
   # load trade file
@@ -75,13 +76,13 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   
   # save files
   write.csv(processed$trades, file=paste0(output.path, "/", filestem.out, "_processed.csv"))
-  write.zoo(processed$pnl.raw, file=paste0(output.path, "/", filestem.out, "_pnl_raw.csv"),sep=",")
   write.csv(processed$discrepencies, file=paste0(output.path, "/", filestem.out, "_err.csv"))
+  write.zoo(pnl.raw, file=paste0(output.path, "/", filestem.out, "_pnl_raw.csv"),sep=",")
   
-  # daily pnl file has some special features
+  # daily pnl file has some special features in the header
   pnl.daily.file <- paste0(output.path, "/", filestem.out, "_pnl_daily.csv")
-  colnames(processed$pnl.daily) <- paste("DailyPnl(USD)", ccy.pair, strategy, timeframe, strat.dir, sep="|")
-  write.zoo(processed$pnl.daily, file=pnl.daily.file,sep=",")
+  colnames(pnl.daily) <- paste("DailyPnl(USD)", ccy.pair, strategy, timeframe, strat.dir, sep="|")
+  write.zoo(pnl.daily, file=pnl.daily.file, sep=",")
   print("wrote log files")
   
   # write RData file that's used for the knitting
