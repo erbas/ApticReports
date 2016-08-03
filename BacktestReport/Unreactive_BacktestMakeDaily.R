@@ -82,7 +82,7 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   # daily pnl file has some special features in the header
   pnl.daily.file <- paste0(output.path, "/", filestem.out, "_pnl_daily.csv")
   colnames(pnl.daily) <- paste("DailyPnl(USD)", ccy.pair, strategy, timeframe, strat.dir, sep="|")
-  write.zoo(pnl.daily, file=pnl.daily.file, sep=",")
+  write.zoo(pnl.daily*AUM, file=pnl.daily.file, sep=",")
   colnames(pnl.daily) <- "Strategy"
   print("wrote log files")
   
