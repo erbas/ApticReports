@@ -83,6 +83,7 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   pnl.daily.file <- paste0(output.path, "/", filestem.out, "_pnl_daily.csv")
   colnames(pnl.daily) <- paste("DailyPnl(USD)", ccy.pair, strategy, timeframe, strat.dir, sep="|")
   write.zoo(pnl.daily, file=pnl.daily.file, sep=",")
+  colnames(pnl.daily) <- "Strategy"
   print("wrote log files")
   
   # write RData file that's used for the knitting
