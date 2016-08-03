@@ -5,10 +5,10 @@ source("Unreactive_BacktestMakeDaily.R")
 
 shinyServer(function(input, output, session) {
   
-#   reval_default <- c(Data_History="/Users/keiran/Dropbox/workspace/ApticReports/Data_History")
-#   output_default <- c(Desktop='/Users/keiran/Desktop')
-  reval_default <- c(Data_History="C:\\Users\\Andrew Pether\\Documents\\Data History\\Revaluation rates")
-  output_default <- c(Desktop="C:\\Users\\Andrew Pether\\Documents")
+  reval_default <- c(Data_History="/Users/keiran/Dropbox/workspace/ApticReports/Data_History")
+  output_default <- c(Desktop='/Users/keiran/Desktop')
+  # reval_default <- c(Data_History="C:\\Users\\Andrew Pether\\Documents\\Data History\\Revaluation rates")
+  # output_default <- c(Desktop="C:\\Users\\Andrew Pether\\Documents")
   
   shinyDirChoose(input, 'reval_path', roots=reval_default, session=session, restrictions=system.file(package='base'))
   shinyDirChoose(input, 'output_path', roots=output_default, session=session, restrictions=system.file(package='base'))
@@ -36,7 +36,8 @@ shinyServer(function(input, output, session) {
     for (i in 1:nrow(ff)) {
       filename <- ff$name[i]
       input_file <- ff$datapath[i]
-      info <- load.and.process(filename, input_file, reval_path, output_path, input$aum, input$strategy_name, input$timeframe, input$futures_contract, input$futures_pt_value)
+      info <- load.and.process(filename, input_file, reval_path, output_path, input$aum, input$strategy_name, 
+                               input$timeframe, input$futures_contract, input$futures_pt_value, input$timezone)
       do.knitting(filename, output_path)
     }
   })

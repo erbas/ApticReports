@@ -28,7 +28,7 @@ source("daily_PnL_v5.R")
 # Wrapper function to load and process one file
 # -----------------------------------------------------------------------------
 
-load.and.process <- function(filename, input_file, reval.path, output.path, AUM, strategy, timeframe, is_future, pt_value) {
+load.and.process <- function(filename, input_file, reval.path, output.path, AUM, strategy, timeframe, is_future, pt_value, timezone) {
   # NOTE: filename is real name of tradefile, input_file is path to temporary file on server
   
   # load trade file
@@ -54,7 +54,7 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   print(tail(eod.xts))
   
   # construct daily pnl
-  processed <- make.daily.pnl(trades.csv, eod.xts, toUSD.xts) #, lfn=fn)
+  processed <- make.daily.pnl(trades.csv, eod.xts, toUSD.xts, trade.TZ = timezone) 
   print("made daily pnl")
   
   # construct stem for output filenames

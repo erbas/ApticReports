@@ -22,13 +22,13 @@ get.ninja.trades <- function(file.with.path) {
 }
 
 # load end of day prices 
-load.eod.prices <- function(ccy.pair, path) {
+load.eod.prices <- function(ccy.pair, path, TZ="Europe/London") {
   filename <- paste0(path,"/",ccy.pair,"_EOD",".csv")
   eod.csv <- read.csv(filename,header=T,sep=",",strip.white=TRUE,stringsAsFactors=FALSE,skip=1)
 #   print("---> inside load.eod.prices <---")
 #   print(tail(eod.csv))
   prices <- as.numeric(eod.csv[,2])
-  time.index <- as.POSIXct(eod.csv[,1],format="%d/%m/%Y",tz="Europe/London")
+  time.index <- as.POSIXct(eod.csv[,1],format="%d/%m/%Y",tz=TZ)
   eod.xts <- na.omit(xts(prices,time.index))
   colnames(eod.xts) <- ccy.pair
   # catch repeated values
@@ -155,12 +155,15 @@ get.nearest.eod <- function(x, dir=1, eod.hms) {
 # kahuna function to split trades at end-of-day to construct daily pnl series
 # -----------------------------------------------------------------------------
 
-make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, TZ="Europe/London", eod.hour=17) { #}, lfn=ymdhms) {
-  # convert trade entry and exit to POSIXct objects
-  entries <- dmy_hms(trades.csv$Entry.time, tz=TZ, truncated=1)
-  exits <- dmy_hms(trades.csv$Exit.time, tz=TZ, truncated=1)
-  eod.hms <- add.time.to.date(eod.xts, eod.hour, TZ)  
-  indexTZ(eod.hms) <- TZ
+make.daily.pnl <- function(trades.csv, eod.xts, ref.ccy.conv, trade.TZ, ref.TZ="Europe/London", eod.hour=17) { #}, lfn=ymdhms) {
+  # convert trade entry and exit to POSIXct objects in user specified timezone
+  entries <- dmy_hms(trades.csv$Entry.time, tz=trade.TZ, truncated=1)
+  exits <- dmy_hms(trades.csv$Exit.time, tz=trade.TZ, truncated=1)
+  # coerce everything to reference timezone
+  indexTZ(entries) <- ref.TZ
+  indexTZ(exits) <- ref.TZ
+  eod.hms <- add.time.to.date(eod.xts, eod.hour, ref.TZ)  
+  indexTZ(eod.hms) <- ref.TZ
   # ignore trades closing after last eod price
   idx.skip <- which(exits > last(index(eod.xts)))
   if (length(idx.skip) > 0 ) {
