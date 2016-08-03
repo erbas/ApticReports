@@ -28,7 +28,7 @@ source("daily_PnL_v5.R")
 # Wrapper function to load and process one file
 # -----------------------------------------------------------------------------
 
-load.and.process <- function(filename, input_file, reval.path, output.path, AUM, strategy, timeframe) {
+load.and.process <- function(filename, input_file, reval.path, output.path, AUM, strategy, timeframe, is_future, pt_value) {
   # NOTE: filename is real name of tradefile, input_file is path to temporary file on server
   
   # load trade file
@@ -79,6 +79,12 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   pnl.daily[is.na(pnl.daily)] <- 0
   pnl.raw <- processed$pnl.raw
   
+  # apply futures transform
+  if (is_future) {
+    pnl.raw <- pnl.raw * pt_value
+    pnl.daily <- pnl.daily * pt_value
+  }
+  
   save(trades.csv, processed, eod.xts, toUSD.xts, pnl.daily, pnl.raw, AUM, filestem.out, ccy.pair, strategy,
        timeframe, strat.dir, output.path,
        file=paste0(output.path, "/temp_pnl.RData"))
@@ -121,6 +127,8 @@ do.knitting <- function(filename, directory) {
   if (grepl(" ",onepagereport)) {
     safe_report_name <- str_replace_all(onepagereport, " ", "_")
     file.copy(onepagereport, safe_report_name)
+  } else {
+    safe_report_name <- onepagereport
   }
   
   print(list.files())

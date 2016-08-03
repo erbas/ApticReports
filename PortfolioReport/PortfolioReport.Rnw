@@ -15,10 +15,8 @@ require(xtable)
 require(corrplot)
 
 Sys.setenv(TZ = "Europe/London")
-# path <- paste0(Sys.getenv("HOME"),"/Desktop/Temp/")
-r_data_file <- normalizePath(paste0("C:\\Users\\Andrew Pether\\Documents\\Temp\\","temp_rtns.RData"))
+r_data_file <- "temp_rtns.RData"
 load(r_data_file)
-# load("temp_rtns.RData")
 @
 
 \begin{wide}
@@ -53,7 +51,7 @@ charts.PerformanceSummary(ptf.daily,geometric=F,wealth.index=F,colorset=rich6equ
 %\newline
 \begin{figure}
 \vspace{0pt}
-<<stats,echo=FALSE,warning=FALSE,eval=TRUE,results='asis'>>=
+<<statstable,echo=FALSE,warning=FALSE,eval=TRUE,results='asis'>>=
 ABSRTN <- colSums(ptf.daily)*100
 ABSRTN.10 <- colSums(ptf.daily["2010::"])*100
 ABSRTN.11 <- colSums(ptf.daily["2011::"])*100

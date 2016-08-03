@@ -21,6 +21,8 @@ shinyUI(pageWithSidebar(
     selectInput('timeframe','TimeFrame',
                 choices = c('15 min','30 min','60 min','120 min','240 min','1440 min'), 
                 selected = '1440 min'),
+    checkboxInput("futures_contract", "Is equities future?", value=FALSE),
+    numericInput("futures_pt_value", "USD value of 1pt change in futures price", value=50, min=1),
     actionButton("goButton", "Go", icon("fire"))
   ),
   

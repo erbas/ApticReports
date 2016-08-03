@@ -141,21 +141,22 @@ library(knitr)
 
 do.knitting <- function(report.name, output.path) {
   
+  temp.dir <- normalizePath(paste0(Sys.getenv("HOME"),"/Temp/"))
+  file.copy(from = "PortfolioReport.Rnw", to = temp.dir, overwrite = TRUE)
+
   src.dir <- getwd()
-  # setwd(paste0(Sys.getenv("HOME"),"/Desktop/Temp/"))
-  setwd("C:\\Users\\Andrew Pether\\Documents\\Temp")
+  setwd(temp.dir)
   
-  ### Set knitr options
-  opts_chunk$set(echo=FALSE, concordance=TRUE)
-  
-  ### Create a file name for the output file
-  ptfreport <- paste0(output.path,"/",report.name, ".tex")
+  ### Create a file names for the input and output files
+  ptf.report <- paste0(report.name,".tex")
   
   ### Run knitr on the .Rnw file to produce a .tex file
-  knit(paste0(src.dir,"/","PortfolioReport.Rnw"), output=ptfreport)
-  
+  opts_knit$set(progress = TRUE, verbose = TRUE, concordance = TRUE)
+  knit(input = "PortfolioReport.Rnw", output=ptf.report)
   
   ### Run texi2pdf on the .tex file within R or process it from your latex system
-  tryCatch(tools::texi2pdf(ptfreport), error=function(e) print(e), finally=traceback())
+  tryCatch(tools::texi2pdf(ptf.report, quiet=FALSE), error=function(e) print(e), finally=traceback())
   
+  # reset the working directory
+  setwd(src.dir)
 }
