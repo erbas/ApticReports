@@ -59,19 +59,7 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
   
   # construct stem for output filenames
   filestem.out <- str_replace(last(str_split(filename, "/")[[1]]), ".csv","")
-  
-  # save files
-  write.csv(processed$trades, file=paste0(output.path, "/", filestem.out, "_processed.csv"))
-  write.zoo(processed$pnl.raw, file=paste0(output.path, "/", filestem.out, "_pnl_raw.csv"),sep=",")
-  #write.csv(processed$sum.daily.pnl, file=paste0(output.path, "/", filestem.out, "_sum_daily_by_trade.csv"))
-  write.csv(processed$discrepencies, file=paste0(output.path, "/", filestem.out, "_err.csv"))
-  # daily pnl file has some special features
-  pnl.daily.file <- paste0(output.path, "/", filestem.out, "_pnl_daily.csv")
-  colnames(processed$pnl.daily) <- paste("DailyPnl(USD)", ccy.pair, strategy, timeframe, strat.dir, sep="|")
-  write.zoo(processed$pnl.daily, file=pnl.daily.file,sep=",")
-  print("wrote log files")
-  
-  
+
   # make pnl dataframe
   # AUM <- 1.e8
   pnl.daily <- processed$pnl.daily/AUM
@@ -85,6 +73,18 @@ load.and.process <- function(filename, input_file, reval.path, output.path, AUM,
     pnl.daily <- pnl.daily * pt_value
   }
   
+  # save files
+  write.csv(processed$trades, file=paste0(output.path, "/", filestem.out, "_processed.csv"))
+  write.zoo(processed$pnl.raw, file=paste0(output.path, "/", filestem.out, "_pnl_raw.csv"),sep=",")
+  write.csv(processed$discrepencies, file=paste0(output.path, "/", filestem.out, "_err.csv"))
+  
+  # daily pnl file has some special features
+  pnl.daily.file <- paste0(output.path, "/", filestem.out, "_pnl_daily.csv")
+  colnames(processed$pnl.daily) <- paste("DailyPnl(USD)", ccy.pair, strategy, timeframe, strat.dir, sep="|")
+  write.zoo(processed$pnl.daily, file=pnl.daily.file,sep=",")
+  print("wrote log files")
+  
+  # write RData file that's used for the knitting
   save(trades.csv, processed, eod.xts, toUSD.xts, pnl.daily, pnl.raw, AUM, filestem.out, ccy.pair, strategy,
        timeframe, strat.dir, output.path,
        file=paste0(output.path, "/temp_pnl.RData"))
