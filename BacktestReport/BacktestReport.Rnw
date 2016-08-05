@@ -57,7 +57,7 @@ charts.PerformanceSummary(pnl.daily2,geometric=T,wealth.index=F,colorset=rich6eq
 \begin{figure}
 \vspace{0pt}
 <<Performance2,echo=FALSE,eval=TRUE,fig.width=8,fig.height=3>>=
-pnl.monthly <- period.apply(pnl.daily2,INDEX=endpoints(pnl.daily2,'months'),FUN=sum)
+pnl.monthly <- period.apply(pnl.daily2, INDEX=endpoints(pnl.daily2,'months'), FUN=sum)
 barplot(pnl.monthly*100,main="Monthly Returns (% AUM)")
 @
 \end{figure}
@@ -75,12 +75,13 @@ DRAWDNS <- table.Drawdowns(pnl.daily2)
 @
 <<stats,echo=FALSE,warning=TRUE,eval=TRUE,results='asis'>>=
 ABSRTN <- colSums(pnl.daily2)*100
-ABSRTN.10 <- colSums(pnl.daily2["2010::"])*100
+# ABSRTN.10 <- colSums(pnl.daily2["2010::"])*100
 ABSRTN.11 <- colSums(pnl.daily2["2011::"])*100
 ABSRTN.12 <- colSums(pnl.daily2["2012::"])*100
 ABSRTN.13 <- colSums(pnl.daily2["2013::"])*100
 ABSRTN.14 <- colSums(pnl.daily2["2014::"])*100
 ABSRTN.15 <- colSums(pnl.daily2["2015::"])*100 
+ABSRTN.16 <- colSums(pnl.daily2["2016::"])*100 
 CAR <- Return.annualized(pnl.daily2,scale=252,geometric=T)*100
 VOL <- apply(pnl.daily2,2,sd)*sqrt(252)*100
 MAXDRAW <- maxDrawdown(pnl.daily2,geometric=T)*100
@@ -100,7 +101,7 @@ RECOV <- DRAWDNS[1,"Recovery"]
 runs <- rle(as.numeric(sign(pnl.raw)))
 CONSEC <- max(runs$lengths[runs$values < 0])
 
-statstable <- data.frame(rbind(ABSRTN,CAR,MAXDRAW,RECOV,CONSEC,VOL,SHARPE,WINLOSS,ABSRTN.10,ABSRTN.11,ABSRTN.12,ABSRTN.13,ABSRTN.14,ABSRTN.15))
+statstable <- data.frame(rbind(ABSRTN,CAR,MAXDRAW,RECOV,CONSEC,VOL,SHARPE,WINLOSS,ABSRTN.11,ABSRTN.12,ABSRTN.13,ABSRTN.14,ABSRTN.15,ABSRTN.16))
 row.names(statstable) <- c("Total Return (% AUM)",
                            "Compounded Annual Return (%)",
                            "Max Drawdown (% AUM)",
@@ -113,12 +114,13 @@ row.names(statstable) <- c("Total Return (% AUM)",
                            #"Skewness",
                            #"Kurtosis",
                            #"Omega Ratio",
-                           "Total Return since 1 Jan 2010 (% AUM)",
+                           # "Total Return since 1 Jan 2010 (% AUM)",
                            "Total Return since 1 Jan 2011 (% AUM)",
                            "Total Return since 1 Jan 2012 (% AUM)",
                            "Total Return since 1 Jan 2013 (% AUM)",
                            "Total Return since 1 Jan 2014 (% AUM)",
-                           "Total Return since 1 Jan 2015 (% AUM)")
+                           "Total Return since 1 Jan 2015 (% AUM)",
+                           "Total Return since 1 Jan 2016 (% AUM)")
 print(xtable(statstable,align=c('l','r')), floating=FALSE, scalebox=0.7)
 @
 \end{figure}
