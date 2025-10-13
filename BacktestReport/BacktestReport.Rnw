@@ -76,12 +76,12 @@ DRAWDNS <- table.Drawdowns(pnl.daily2)
 <<stats,echo=FALSE,warning=TRUE,eval=TRUE,results='asis'>>=
 ABSRTN <- colSums(pnl.daily2)*100
 # ABSRTN.10 <- colSums(pnl.daily2["2010::"])*100
-ABSRTN.11 <- colSums(pnl.daily2["2011::"])*100
-ABSRTN.12 <- colSums(pnl.daily2["2012::"])*100
-ABSRTN.13 <- colSums(pnl.daily2["2013::"])*100
-ABSRTN.14 <- colSums(pnl.daily2["2014::"])*100
-ABSRTN.15 <- colSums(pnl.daily2["2015::"])*100 
-ABSRTN.16 <- colSums(pnl.daily2["2016::"])*100 
+ABSRTN.11 <- colSums(pnl.daily2["2020::"])*100
+ABSRTN.12 <- colSums(pnl.daily2["2021::"])*100
+ABSRTN.13 <- colSums(pnl.daily2["2022::"])*100
+ABSRTN.14 <- colSums(pnl.daily2["2023::"])*100
+ABSRTN.15 <- colSums(pnl.daily2["2024::"])*100 
+ABSRTN.16 <- colSums(pnl.daily2["2015::"])*100 
 CAR <- Return.annualized(pnl.daily2,scale=252,geometric=T)*100
 VOL <- apply(pnl.daily2,2,sd)*sqrt(252)*100
 MAXDRAW <- maxDrawdown(pnl.daily2,geometric=T)*100
@@ -115,12 +115,12 @@ row.names(statstable) <- c("Total Return (% AUM)",
                            #"Kurtosis",
                            #"Omega Ratio",
                            # "Total Return since 1 Jan 2010 (% AUM)",
-                           "Total Return since 1 Jan 2011 (% AUM)",
-                           "Total Return since 1 Jan 2012 (% AUM)",
-                           "Total Return since 1 Jan 2013 (% AUM)",
-                           "Total Return since 1 Jan 2014 (% AUM)",
-                           "Total Return since 1 Jan 2015 (% AUM)",
-                           "Total Return since 1 Jan 2016 (% AUM)")
+                           "Total Return since 1 Jan 2020 (% AUM)",
+                           "Total Return since 1 Jan 2021 (% AUM)",
+                           "Total Return since 1 Jan 2022 (% AUM)",
+                           "Total Return since 1 Jan 2023 (% AUM)",
+                           "Total Return since 1 Jan 2024 (% AUM)",
+                           "Total Return since 1 Jan 2025 (% AUM)")
 print(xtable(statstable,align=c('l','r')), floating=FALSE, scalebox=0.7)
 @
 \end{figure}
