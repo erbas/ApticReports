@@ -38,18 +38,18 @@ load_and_process <- function(filenames, index.path, output_path, AUM, report.nam
   
   # load S&P500 index
   # sp500 <- Ad(getSymbols("^GSPC", src="yahoo", from=as.Date("2010-01-01"), auto.assign = FALSE))
-  # Download S&P 500 data
-  sp500 <- getSymbols("^GSPC", src = "yahoo", from = "2010-01-01", to = Sys.Date())
 
-  print("loaded S&P500")
+  # print("loaded S&P500")
   
   # load pnl files, combine into returns object
   if (ptf.of.ptf) {
     AUM <- 1.0
   } 
-  ref.xts <- merge(new.edge.xts, ROC(sp500,1), fill=0)
+  # ref.xts <- merge(new.edge.xts, ROC(sp500,1), fill=0)
+  ref.xts <- new.edge.xts
   ref.xts[is.na(ref.xts)] <- 0
-  colnames(ref.xts) <- c("NewEdge.CTA","SP500")
+  # colnames(ref.xts) <- c("NewEdge.CTA","SP500")
+  colnames(ref.xts) <- c("NewEdge.CTA")
   print(head(ref.xts))
   rtns.xts <- ref.xts
   meta.data <- NULL
@@ -113,7 +113,7 @@ load_and_process <- function(filenames, index.path, output_path, AUM, report.nam
   print(head(ptf.monthly))
   ep2 <- endpoints(ref.xts,on="months")
   new.edge.monthly <- period.sum(ref.xts[,1],ep2)
-  sp500.monthly <- period.sum(ref.xts[,2],ep2)
+  # sp500.monthly <- period.sum(ref.xts[,2],ep2)
   ptf.monthly <- merge(ptf.monthly,new.edge.monthly,sp500.monthly,all=FALSE)
   colnames(ptf.monthly) <- c("Portfolio","NewEdge.CTA.Index","SP500")
   print(head(ptf.monthly))
