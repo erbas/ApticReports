@@ -1,10 +1,5 @@
 Sys.setenv(TZ = "Europe/London")
 
-install.packages("yfR")
-
-# Load library
-library(yfR)
-
 library(quantmod)
 library(lubridate)
 library(PerformanceAnalytics)
