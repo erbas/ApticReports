@@ -1,4 +1,10 @@
 Sys.setenv(TZ = "Europe/London")
+
+install.packages("yfR")
+
+# Load library
+library(yfR)
+
 library(quantmod)
 library(lubridate)
 library(PerformanceAnalytics)
@@ -36,7 +42,10 @@ load_and_process <- function(filenames, index.path, output_path, AUM, report.nam
   print("loaded NewEdge file")
   
   # load S&P500 index
-  sp500 <- Ad(getSymbols("^GSPC", src="yahoo", from=as.Date("2001-01-01"), auto.assign = FALSE))
+  # sp500 <- Ad(getSymbols("^GSPC", src="yahoo", from=as.Date("2010-01-01"), auto.assign = FALSE))
+  # Download S&P 500 data
+  sp500 <- getSymbols("^GSPC", src = "yahoo", from = "2010-01-01", to = Sys.Date())
+
   print("loaded S&P500")
   
   # load pnl files, combine into returns object
