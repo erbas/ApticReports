@@ -428,4 +428,4 @@ def get(fname: str):
 
 # ── Run ──────────────────────────────────────────────────────────────────────
 
-serve()
+serve(port=int(os.environ.get("PORT", 5001)), reload=os.environ.get("RENDER") is None)
