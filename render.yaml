@@ -10,3 +10,7 @@ services:
         value: "true"
       - key: PYTHON_VERSION
         value: "3.11.11"
+      - key: APP_PASSWORD
+        sync: false  # set manually in Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true  # Render auto-generates a random secret

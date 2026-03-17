@@ -1,6 +1,8 @@
 """ApticReports — FastHTML web app for backtest processing and portfolio reporting."""
 
 import os
+import hashlib
+import hmac
 import uuid
 import traceback
 
@@ -17,8 +19,29 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(EOD_DIR, exist_ok=True)
 
+# ── Auth ─────────────────────────────────────────────────────────────────────
+
+APP_PASSWORD = os.environ.get("APP_PASSWORD", "aptic2024")
+LOGIN_SKIP = frozenset(["/login", "/static"])
+
+
+def _check_auth(req, sess):
+    """Beforeware: redirect to /login if not authenticated."""
+    if any(req.url.path.startswith(p) for p in LOGIN_SKIP):
+        return
+    if not sess.get("authed"):
+        return RedirectResponse("/login", status_code=303)
+
+
+bware = Beforeware(_check_auth, skip=list(LOGIN_SKIP))
+
 custom_css = Link(rel="stylesheet", href="/static/style.css")
-app, rt = fast_app(hdrs=[custom_css], static_path=os.path.join(os.path.dirname(__file__), "static"))
+app, rt = fast_app(
+    hdrs=[custom_css],
+    static_path=os.path.join(os.path.dirname(__file__), "static"),
+    before=bware,
+    secret_key=os.environ.get("SESSION_SECRET", hashlib.sha256(APP_PASSWORD.encode()).hexdigest()),
+)
 
 
 # ── Shared UI components ─────────────────────────────────────────────────────
@@ -26,7 +49,11 @@ app, rt = fast_app(hdrs=[custom_css], static_path=os.path.join(os.path.dirname(_
 def page_shell(*content, active_tab="backtest"):
     """Main page layout with tab navigation."""
     return Title("ApticReports"), Main(
-        H1("ApticReports"),
+        Div(
+            H1("ApticReports", style="margin:0;"),
+            A("Logout", href="/logout", cls="logout-btn"),
+            style="display:flex; justify-content:space-between; align-items:center;",
+        ),
         Nav(
             A("Backtest", hx_get="/tab/backtest", hx_target="#tab-content",
               cls="active" if active_tab == "backtest" else "",
@@ -71,6 +98,48 @@ def processing_indicator():
 
 def error_box(msg: str):
     return Div(f"Error: {msg}", cls="error-msg")
+
+
+# ── Auth routes ──────────────────────────────────────────────────────────────
+
+def login_page(error: str = ""):
+    return Title("ApticReports — Login"), Main(
+        Div(
+            H1("ApticReports"),
+            Form(
+                Div(
+                    Label("Password", fr="password"),
+                    Input(type="password", name="password", id="password",
+                          placeholder="Enter password", autofocus=True, required=True),
+                    cls="form-section",
+                ),
+                error_box(error) if error else "",
+                Button("Sign in", type="submit", cls="primary"),
+                method="post", action="/login",
+            ),
+            cls="login-card",
+        ),
+        cls="container login-container",
+    )
+
+
+@rt("/login")
+def get():
+    return login_page()
+
+
+@rt("/login")
+def post(password: str, sess):
+    if hmac.compare_digest(password, APP_PASSWORD):
+        sess["authed"] = True
+        return RedirectResponse("/", status_code=303)
+    return login_page(error="Wrong password. Try again.")
+
+
+@rt("/logout")
+def get(sess):
+    sess.clear()
+    return RedirectResponse("/login", status_code=303)
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
