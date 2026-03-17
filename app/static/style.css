@@ -1,0 +1,184 @@
+/* ApticReports custom styles — supplements Pico CSS */
+
+:root {
+    --brand: #2E86AB;
+    --danger: #E84855;
+    --bg-muted: #F0F4F8;
+}
+
+/* Tab navigation */
+.tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--brand);
+    margin-bottom: 1.5rem;
+}
+
+.tabs a {
+    padding: 0.6rem 1.5rem;
+    text-decoration: none;
+    color: #555;
+    font-weight: 600;
+    border: 2px solid transparent;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tabs a.active, .tabs a[aria-selected="true"] {
+    color: var(--brand);
+    background: white;
+    border-color: var(--brand);
+    border-bottom-color: white;
+}
+
+.tabs a:hover:not(.active) {
+    color: var(--brand);
+    background: var(--bg-muted);
+}
+
+/* Upload area */
+.upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background: var(--bg-muted);
+    transition: border-color 0.2s;
+}
+
+.upload-area:hover {
+    border-color: var(--brand);
+}
+
+/* Results card */
+.results-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    background: white;
+}
+
+.results-card h3 {
+    color: var(--brand);
+    margin-top: 0;
+}
+
+/* Metrics grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.5rem;
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+}
+
+.metric-item .label { color: #555; }
+.metric-item .value { font-weight: 600; }
+
+/* Chart container */
+.chart-container {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.chart-container img {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Download links */
+.downloads {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.downloads a {
+    padding: 0.5rem 1rem;
+    background: var(--brand);
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.downloads a:hover {
+    opacity: 0.9;
+}
+
+/* Processing indicator */
+.processing {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: var(--brand);
+    font-weight: 500;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--bg-muted);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* File list */
+.file-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.file-list li {
+    padding: 0.3rem 0.5rem;
+    background: var(--bg-muted);
+    border-radius: 4px;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+/* Form tweaks */
+.param-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.form-section h4 {
+    margin-bottom: 0.5rem;
+    color: var(--brand);
+}
+
+/* Error message */
+.error-msg {
+    background: #FFF0F0;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+}

@@ -1,0 +1,5 @@
+python-fasthtml
+pandas
+matplotlib
+reportlab
+python-multipart
