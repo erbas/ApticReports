@@ -173,6 +173,46 @@
     color: var(--brand);
 }
 
+/* Login */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.login-card {
+    max-width: 400px;
+    width: 100%;
+    padding: 2rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.login-card h1 {
+    color: var(--brand);
+    margin-bottom: 1.5rem;
+}
+
+.login-card form { text-align: left; }
+
+.logout-btn {
+    font-size: 0.85rem;
+    color: #888;
+    text-decoration: none;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.logout-btn:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
 /* Error message */
 .error-msg {
     background: #FFF0F0;
