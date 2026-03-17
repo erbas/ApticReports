@@ -18,3 +18,11 @@ Data_History/*
 MODEL_TRADES/*
 APTICreports.v12.suo
 BacktestReport/run.r.Rout
+
+# Python
+__pycache__/
+*.pyc
+uploads/
+output/
+*.egg-info/
+.env
