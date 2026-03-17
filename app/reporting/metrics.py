@@ -26,7 +26,10 @@ def annualized_return(daily_returns: pd.Series, scale: int = 252, geometric: boo
 
 def annualized_volatility(daily_returns: pd.Series, scale: int = 252) -> float:
     """Annualized standard deviation."""
-    return daily_returns.std() * np.sqrt(scale)
+    vol = daily_returns.std()
+    if np.isnan(vol):
+        return 0.0
+    return vol * np.sqrt(scale)
 
 
 def sharpe_ratio(daily_returns: pd.Series, rf_annual: float = 0.0025, scale: int = 252,

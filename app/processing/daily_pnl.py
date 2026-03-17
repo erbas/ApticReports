@@ -34,13 +34,15 @@ def make_daily_pnl(
     dict with keys: trades, pnl_daily, pnl_raw, discrepancies
     """
     # Parse entry/exit times in trade timezone, then convert to ref timezone
-    entries = pd.to_datetime(trades_csv["Entry.time"], format="%d/%m/%Y %H:%M:%S", dayfirst=True)
-    # Try with seconds first, fall back to without
-    if entries.isna().any():
-        entries = pd.to_datetime(trades_csv["Entry.time"], format="%d/%m/%Y %H:%M", dayfirst=True)
-    exits = pd.to_datetime(trades_csv["Exit.time"], format="%d/%m/%Y %H:%M:%S", dayfirst=True)
-    if exits.isna().any():
-        exits = pd.to_datetime(trades_csv["Exit.time"], format="%d/%m/%Y %H:%M", dayfirst=True)
+    # R's lubridate dmy_hms with truncated=1 handles both HH:MM:SS and HH:MM
+    def _parse_datetimes(col):
+        try:
+            return pd.to_datetime(col, format="%d/%m/%Y %H:%M:%S")
+        except ValueError:
+            return pd.to_datetime(col, format="%d/%m/%Y %H:%M")
+
+    entries = _parse_datetimes(trades_csv["Entry.time"])
+    exits = _parse_datetimes(trades_csv["Exit.time"])
 
     entries = entries.dt.tz_localize(trade_tz).dt.tz_convert(ref_tz)
     exits = exits.dt.tz_localize(trade_tz).dt.tz_convert(ref_tz)
@@ -68,8 +70,8 @@ def make_daily_pnl(
         "Market.pos.": direction.values,
         "Entry.price": trades_csv["Entry.price"].values.astype(float),
         "Exit.price": trades_csv["Exit.price"].values.astype(float),
-        "Entry.time": entries.values,
-        "Exit.time": exits.values,
+        "Entry.time": entries.reset_index(drop=True),  # keep tz-aware
+        "Exit.time": exits.reset_index(drop=True),      # keep tz-aware
         "Quantity": trades_csv["Quantity"].values.astype(float),
     })
 
@@ -148,7 +150,11 @@ def make_daily_pnl(
         * (trades_csv["Exit.price"].values.astype(float) - trades_csv["Entry.price"].values.astype(float))
         * trades_csv["Quantity"].values.astype(float)
     )
-    pnl_raw = pd.Series(pnl_raw_vals, index=entries.values, name="pnl_raw")
+    pnl_raw = pd.Series(pnl_raw_vals, index=entries.to_numpy(), name="pnl_raw")
+    # Ensure tz-aware index
+    if pnl_raw.index.tz is None:
+        pnl_raw.index = pd.DatetimeIndex(entries)
+
 
     # Convert raw PnL to USD using nearest EOD conversion rate
     conv_times = ref_ccy_conv.index
@@ -161,11 +167,12 @@ def make_daily_pnl(
     all_exit_times = pd.to_datetime(all_trades["Exit.time"])
     if all_exit_times.dt.tz is None:
         all_exit_times = all_exit_times.dt.tz_localize(ref_tz)
-    eod_exit_times = all_exit_times.map(lambda x: get_nearest_eod(x, trading_days, direction=1))
+    eod_exit_list = [get_nearest_eod(x, trading_days, direction=1) for x in all_exit_times]
+    eod_exit_times = pd.DatetimeIndex(eod_exit_list)
     all_trades["Exit.time.official"] = eod_exit_times
 
     # Create PnL series indexed by official EOD exit
-    pnl_series = pd.Series(all_trades["pnl"].values, index=eod_exit_times.values)
+    pnl_series = pd.Series(all_trades["pnl"].values, index=eod_exit_times)
 
     # Aggregate to daily
     pnl_daily = pnl_series.groupby(pnl_series.index.date).sum()
