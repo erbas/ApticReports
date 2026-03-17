@@ -61,6 +61,9 @@ def page_shell(*content, active_tab="backtest"):
             A("Portfolio", hx_get="/tab/portfolio", hx_target="#tab-content",
               cls="active" if active_tab == "portfolio" else "",
               **{"hx-on::after-request": "document.querySelectorAll('.tabs a').forEach(a=>a.classList.remove('active'));this.classList.add('active')"}),
+            A("Reference Data", hx_get="/tab/refdata", hx_target="#tab-content",
+              cls="active" if active_tab == "refdata" else "",
+              **{"hx-on::after-request": "document.querySelectorAll('.tabs a').forEach(a=>a.classList.remove('active'));this.classList.add('active')"}),
             cls="tabs",
         ),
         Div(*content, id="tab-content"),
@@ -162,19 +165,22 @@ def get():
 # ── Backtest Tab ─────────────────────────────────────────────────────────────
 
 def backtest_tab():
+    # Check for available EOD files
+    eod_files = sorted(f for f in os.listdir(EOD_DIR) if f.endswith("_EOD.csv")) if os.path.isdir(EOD_DIR) else []
+    eod_notice = Div(
+        P("Available EOD files: ", ", ".join(eod_files) if eod_files else "None",
+          style="font-size:0.85rem; color:#666;"),
+        P(A("Upload EOD files in Reference Data tab →", hx_get="/tab/refdata", hx_target="#tab-content",
+             **{"hx-on::after-request": "document.querySelectorAll('.tabs a').forEach(a=>a.classList.remove('active'));document.querySelector('.tabs a:nth-child(3)').classList.add('active')"}),
+          style="font-size:0.85rem;") if not eod_files else "",
+        cls="form-section",
+    )
+
     return Div(
         H2("Backtest Processing"),
         P("Upload NinjaTrader trade CSV files to generate daily PnL and reports."),
+        eod_notice,
 
-        # EOD files directory
-        Div(
-            H4("EOD Price Files"),
-            P(f"Place EOD price CSVs (e.g. EURUSD_EOD.csv) in: ", Code(os.path.abspath(EOD_DIR)),
-              style="font-size:0.85rem; color:#666;"),
-            cls="form-section",
-        ),
-
-        # Upload form
         Form(
             Div(
                 H4("Trade File"),
@@ -370,7 +376,9 @@ def portfolio_tab():
             # Benchmark files (optional)
             Div(
                 H4("Benchmark Index (optional)"),
-                P(f"Place NewEdge_CTA_Historical.csv in: ", Code(os.path.abspath(EOD_DIR)),
+                P("Upload NewEdge_CTA_Historical.csv via the ",
+                  A("Reference Data tab", hx_get="/tab/refdata", hx_target="#tab-content",
+                    **{"hx-on::after-request": "document.querySelectorAll('.tabs a').forEach(a=>a.classList.remove('active'));document.querySelector('.tabs a:nth-child(3)').classList.add('active')"}),
                   style="font-size:0.85rem; color:#666;"),
                 cls="form-section",
             ),
@@ -483,6 +491,98 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
 
     except Exception as e:
         return error_box(f"{e}\n\n{traceback.format_exc()}")
+
+
+# ── Reference Data Tab ───────────────────────────────────────────────────
+
+@rt("/tab/refdata")
+def get():
+    return refdata_tab()
+
+
+def _eod_file_list():
+    """Build the list of currently uploaded EOD/reference files."""
+    if not os.path.isdir(EOD_DIR):
+        return Div(P("No reference data uploaded yet.", style="color:#666;"))
+    files = sorted(os.listdir(EOD_DIR))
+    if not files:
+        return Div(P("No reference data uploaded yet.", style="color:#666;"))
+    rows = []
+    for f in files:
+        fpath = os.path.join(EOD_DIR, f)
+        size_kb = os.path.getsize(fpath) / 1024
+        rows.append(Tr(
+            Td(f),
+            Td(f"{size_kb:.1f} KB"),
+            Td(Button("Delete", hx_delete=f"/refdata/{f}", hx_target="#refdata-files",
+                       hx_confirm=f"Delete {f}?", cls="small danger")),
+        ))
+    return Table(
+        Thead(Tr(Th("Filename"), Th("Size"), Th(""))),
+        Tbody(*rows),
+        style="width:100%; font-size:0.9rem;",
+    )
+
+
+def refdata_tab():
+    return Div(
+        H2("Reference Data"),
+        P("Upload EOD price files, FX rate files, and benchmark indices used by backtests."),
+
+        Div(
+            H4("Upload Reference Files"),
+            P("Accepted formats: ", Code("EURUSD_EOD.csv"), ", ", Code("USDJPY_EOD.csv"),
+              ", ", Code("NewEdge_CTA_Historical.csv"), ", etc.",
+              style="font-size:0.85rem; color:#666;"),
+            P("CSV format: header row, skip row, then [Date (dd/mm/yyyy), Price] columns.",
+              style="font-size:0.85rem; color:#666;"),
+            Form(
+                Div(
+                    Input(type="file", name="reffiles", accept=".csv", multiple=True, required=True),
+                    cls="upload-area",
+                ),
+                Button("Upload Files", type="submit", cls="primary"),
+                hx_post="/refdata/upload",
+                hx_target="#refdata-files",
+                hx_encoding="multipart/form-data",
+                style="margin-top:0.5rem;",
+            ),
+            cls="form-section",
+        ),
+
+        Div(
+            H4("Current Reference Files"),
+            Div(_eod_file_list(), id="refdata-files"),
+            cls="form-section",
+        ),
+    )
+
+
+@rt("/refdata/upload")
+async def post(reffiles: list[UploadFile]):
+    try:
+        uploaded = []
+        for uf in reffiles:
+            fname = uf.filename
+            save_path = os.path.join(EOD_DIR, fname)
+            content = await uf.read()
+            with open(save_path, "wb") as f:
+                f.write(content)
+            uploaded.append(fname)
+        return Div(
+            Div(f"Uploaded: {', '.join(uploaded)}", cls="success-msg"),
+            _eod_file_list(),
+        )
+    except Exception as e:
+        return Div(error_box(str(e)), _eod_file_list())
+
+
+@rt("/refdata/{fname:path}")
+def delete(fname: str):
+    fpath = os.path.join(EOD_DIR, fname)
+    if os.path.exists(fpath):
+        os.remove(fpath)
+    return _eod_file_list()
 
 
 # ── File downloads ───────────────────────────────────────────────────────────
