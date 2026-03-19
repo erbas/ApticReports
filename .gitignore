@@ -26,3 +26,5 @@ uploads/
 output/
 *.egg-info/
 .env
+.venv/
+.sesskey
