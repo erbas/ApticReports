@@ -199,25 +199,26 @@ def generate_backtest_pdf(
     mid_frame_bottom = row1_top_y + 2 * mm
     mid_frame_h = mid_frame_top - mid_frame_bottom
 
-    # Performance chart (right column): ~91mm × use 1.3:1 height:width ratio
-    perf_pdf_w = right_w - 2 * mm  # ~89mm
-    perf_pdf_h = perf_pdf_w * 1.3  # ~116mm — doesn't fill full mid_frame_h
+    # Performance chart (right column): ~89mm × ~116mm
+    perf_pdf_w = right_w - 2 * mm
+    perf_pdf_h = perf_pdf_w * 1.3
     _scale = 2.0  # render at 2× PDF size for readable text
-    perf_fig = (perf_pdf_w / 25.4 * _scale, perf_pdf_h / 25.4 * _scale)
+    # NOTE: all pdf dimensions are in points (72pt = 1 inch), divide by 72
+    perf_fig = (perf_pdf_w / 72 * _scale, perf_pdf_h / 72 * _scale)
     perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance",
                                                    figsize=perf_fig)
 
     # Monthly bar (left column, wide and short)
-    monthly_pdf_w = left_w - 2 * mm  # ~93mm
+    monthly_pdf_w = left_w - 2 * mm
     monthly_pdf_h = 25 * mm
-    monthly_fig = (monthly_pdf_w / 25.4 * _scale, monthly_pdf_h / 25.4 * _scale)
+    monthly_fig = (monthly_pdf_w / 72 * _scale, monthly_pdf_h / 72 * _scale)
     monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=monthly_fig)
 
     # Bottom row 1: three charts, each ~60mm × 43mm
     bot_chart_w = (usable_w - 4 * mm) / 3
-    bot_pdf_w = bot_chart_w - 1 * mm  # ~59mm
-    bot_pdf_h = row1_h - 2 * mm      # ~43mm
-    bot_fig = (bot_pdf_w / 25.4 * _scale, bot_pdf_h / 25.4 * _scale)
+    bot_pdf_w = bot_chart_w - 1 * mm
+    bot_pdf_h = row1_h - 2 * mm
+    bot_fig = (bot_pdf_w / 72 * _scale, bot_pdf_h / 72 * _scale)
 
     try:
         hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=bot_fig)
@@ -230,7 +231,7 @@ def generate_backtest_pdf(
     # Bottom row 2: timezone cumulative, full width ~190mm × 38mm
     tz_cum_pdf_w = usable_w
     tz_cum_pdf_h = row2_h - 2 * mm
-    tz_cum_fig = (tz_cum_pdf_w / 25.4 * _scale, tz_cum_pdf_h / 25.4 * _scale)
+    tz_cum_fig = (tz_cum_pdf_w / 72 * _scale, tz_cum_pdf_h / 72 * _scale)
     tz_cum_b64 = charts.timezone_cumulative_returns_formal(
         pnl_raw, daily_returns, figsize=tz_cum_fig)
 
