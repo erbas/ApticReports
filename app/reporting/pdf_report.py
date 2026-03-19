@@ -176,10 +176,10 @@ def generate_backtest_pdf(
     filestem: str,
     output_path: str,
 ) -> str:
-    """Generate a single-page landscape A4 backtest PDF report. Returns path to PDF file."""
+    """Generate a single-page portrait A4 backtest PDF report. Returns path to PDF file."""
     pdf_path = os.path.join(output_path, f"{filestem}.pdf")
 
-    page_w, page_h = landscape(A4)  # 297 x 210 mm
+    page_w, page_h = A4  # 210 x 297 mm (portrait)
     margin_l = 10 * mm
     margin_r = 10 * mm
     margin_t = 10 * mm
@@ -188,13 +188,13 @@ def generate_backtest_pdf(
     usable_w = page_w - margin_l - margin_r
     usable_h = page_h - margin_t - margin_b
 
-    # Layout regions
-    header_h = 16 * mm
-    bottom_h = 42 * mm
-    middle_h = usable_h - header_h - bottom_h - 2 * mm  # gap
+    # Layout: header (14mm) | two-col middle (55%) | bottom 3-col (30%)
+    header_h = 14 * mm
+    bottom_h = usable_h * 0.30
+    middle_h = usable_h - header_h - bottom_h - 2 * mm
 
-    left_w = usable_w * 0.38
-    right_w = usable_w * 0.60
+    left_w = usable_w * 0.48
+    right_w = usable_w * 0.50
     col_gap = usable_w * 0.02
 
     # --- Styles ---
@@ -253,25 +253,33 @@ def generate_backtest_pdf(
                 display_k = display_k.replace("(%)", "(% AUM)")
             renamed_stats[display_k] = stats[k]
 
-    # --- Generate charts as base64 ---
+    # --- Generate charts as base64 (sized for portrait A4) ---
+    # Right column performance chart — fits ~95mm wide
+    perf_fig_w = right_w / (25.4)  # mm to inches
     perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance",
-                                                   figsize=(5.5, 3.5))
-    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=(3.5, 1.15))
+                                                   figsize=(perf_fig_w, perf_fig_w * 0.85))
+    # Monthly bar in left column
+    monthly_fig_w = left_w / (25.4)
+    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=(monthly_fig_w, 1.1))
+
+    # Bottom row: three charts, each ~60mm wide
+    bot_chart_w = (usable_w - 4 * mm) / 3
+    bot_fig_w = bot_chart_w / (25.4)
+    bot_fig_h = bottom_h / (25.4) * 0.85
 
     try:
-        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=(3.2, 1.6))
+        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=(bot_fig_w, bot_fig_h))
     except Exception:
         hist_b64 = None
 
-    vol_b64 = charts.rolling_vol_chart_formal(daily_returns, figsize=(3.2, 1.6))
-
-    tz_b64 = charts.timezone_chart_formal(pnl_raw, figsize=(3.2, 1.6))
+    vol_b64 = charts.rolling_vol_chart_formal(daily_returns, figsize=(bot_fig_w, bot_fig_h))
+    tz_b64 = charts.timezone_chart_formal(pnl_raw, figsize=(bot_fig_w, bot_fig_h))
 
     # --- Build the PDF using canvas directly for precise positioning ---
     from reportlab.pdfgen import canvas as canvasmod
     from reportlab.platypus.frames import Frame as RLFrame
 
-    c = canvasmod.Canvas(pdf_path, pagesize=landscape(A4))
+    c = canvasmod.Canvas(pdf_path, pagesize=A4)
 
     # ---- HEADER ----
     x_start = margin_l
@@ -350,43 +358,44 @@ def generate_backtest_pdf(
     monthly_img = _chart_image(monthly_b64, width=left_w - 2 * mm)
     left_story.append(monthly_img)
 
+    # Middle section: from below hrule to above bottom row
+    middle_top = y_hrule - 2 * mm
+    middle_bottom = margin_b + bottom_h + 2 * mm
+    middle_frame_h = middle_top - middle_bottom
+
     # Draw left column using a Frame
-    left_frame = RLFrame(left_x, margin_b + bottom_h + 1 * mm, left_w,
-                         left_top - (margin_b + bottom_h + 1 * mm),
+    left_frame = RLFrame(left_x, middle_bottom, left_w, middle_frame_h,
                          leftPadding=0, rightPadding=0,
                          topPadding=0, bottomPadding=0)
     left_frame.addFromList(left_story, c)
 
     # ---- RIGHT COLUMN (Performance charts) ----
     right_x = left_x + left_w + col_gap
-    right_top = left_top
 
     right_story = []
     perf_img = _chart_image(perf_b64, width=right_w - 2 * mm)
     right_story.append(perf_img)
 
-    right_frame = RLFrame(right_x, margin_b + bottom_h + 1 * mm, right_w,
-                          right_top - (margin_b + bottom_h + 1 * mm),
+    right_frame = RLFrame(right_x, middle_bottom, right_w, middle_frame_h,
                           leftPadding=0, rightPadding=0,
                           topPadding=0, bottomPadding=0)
     right_frame.addFromList(right_story, c)
 
     # ---- BOTTOM ROW (three charts side by side) ----
-    bottom_y = margin_b
-    chart_w = (usable_w - 4 * mm) / 3  # three charts with gaps
+    chart_w = (usable_w - 4 * mm) / 3
 
     bottom_charts = []
     if hist_b64:
         bottom_charts.append(hist_b64)
     else:
-        bottom_charts.append(vol_b64)  # fallback
+        bottom_charts.append(vol_b64)
     bottom_charts.append(vol_b64)
     bottom_charts.append(tz_b64)
 
     for i, b64 in enumerate(bottom_charts):
         chart_x = x_start + i * (chart_w + 2 * mm)
         frame_story = [_chart_image(b64, width=chart_w - 1 * mm)]
-        bottom_frame = RLFrame(chart_x, bottom_y, chart_w, bottom_h,
+        bottom_frame = RLFrame(chart_x, margin_b, chart_w, bottom_h,
                                leftPadding=0, rightPadding=0,
                                topPadding=0, bottomPadding=0)
         bottom_frame.addFromList(frame_story, c)
