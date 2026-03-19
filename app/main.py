@@ -286,10 +286,23 @@ async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
         stats = compute_all_metrics(daily_returns, result["pnl_raw"], aum)
 
         # Generate charts
-        from app.reporting.charts import performance_summary, monthly_returns_bar, rolling_vol_chart
+        from app.reporting.charts import (performance_summary, monthly_returns_bar,
+                                         rolling_vol_chart, returns_histogram, timezone_chart_formal)
         perf_chart = performance_summary(daily_returns,
                                          title=f"{strategy} {result['ccy_pair']}")
         monthly_chart = monthly_returns_bar(daily_returns)
+        vol_chart = rolling_vol_chart(daily_returns)
+
+        # Additional charts (histogram, timezone)
+        try:
+            hist_chart = returns_histogram(result["pnl_raw"], aum)
+        except Exception:
+            hist_chart = None
+
+        try:
+            tz_chart = timezone_chart_formal(result["pnl_raw"])
+        except Exception:
+            tz_chart = None
 
         # Generate PDF
         from app.reporting.pdf_report import generate_backtest_pdf
@@ -306,12 +319,21 @@ async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
         )
         result["files"]["pdf"] = pdf_path
 
-        # Build results UI
+        # Build results UI with all charts
+        chart_elements = [
+            chart_img(perf_chart, "Performance Summary"),
+            chart_img(monthly_chart, "Monthly Returns"),
+            chart_img(vol_chart, "Rolling Volatility"),
+        ]
+        if hist_chart:
+            chart_elements.append(chart_img(hist_chart, "Returns Histogram"))
+        if tz_chart:
+            chart_elements.append(chart_img(tz_chart, "Timezone Analysis"))
+
         return Div(
             H3(f"Results: {strategy} {result['ccy_pair']} {timeframe} {result['strat_dir']}"),
             metrics_display(stats),
-            chart_img(perf_chart, "Performance Summary"),
-            chart_img(monthly_chart, "Monthly Returns"),
+            *chart_elements,
             download_links({
                 "Daily PnL CSV": result["files"]["daily"],
                 "Processed Trades": result["files"]["trades"],

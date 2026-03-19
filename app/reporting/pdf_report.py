@@ -62,76 +62,11 @@ class _HRule(Flowable):
 
 
 # ---------------------------------------------------------------------------
-# Backtest PDF — single landscape A4 page
+# Backtest PDF — single portrait A4 page
 # ---------------------------------------------------------------------------
 
-def _build_summary_table(stats: dict) -> Table:
-    """Build formal summary statistics table with metric/Strategy columns."""
-    # Ordered metrics matching R report
-    ordered_keys = [
-        "Total Return (% AUM)",
-        "Compounded Annual Return (%)",
-        "Max Drawdown (% AUM)",
-        "Days to Recovery",
-        "Max Consecutive Losers",
-        "Annualized Volatility (%)",
-        "Sharpe Ratio",
-        "Win/Loss Ratio",
-    ]
-    # Add yearly returns
-    yearly_keys = sorted([k for k in stats if k.startswith("Return since")])
-    ordered_keys.extend(yearly_keys)
-
-    data = [["", "Strategy"]]
-    for k in ordered_keys:
-        if k not in stats:
-            continue
-        v = stats[k]
-        label = k
-        # Rename for display
-        if k == "Max Consecutive Losers":
-            label = "Max Consecutive Losing Trades"
-        if k.startswith("Return since"):
-            label = "Total " + k.replace("Return", "Return").replace("(%)", "(% AUM)")
-            if "(% AUM)" not in label:
-                label = label.replace("(%)", "(% AUM)")
-        if isinstance(v, float):
-            val_str = f"{v:.2f}"
-        else:
-            val_str = str(v)
-        data.append([label, val_str])
-
-    col_w1 = 58 * mm
-    col_w2 = 18 * mm
-    t = Table(data, colWidths=[col_w1, col_w2])
-    style_cmds = [
-        # Header row
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 5.5),
-        ("FONTSIZE", (0, 1), (-1, -1), 5),
-        ("FONTNAME", (0, 1), (0, -1), "Helvetica"),
-        ("FONTNAME", (1, 1), (1, -1), "Helvetica"),
-        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ("ALIGN", (0, 0), (0, -1), "LEFT"),
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
-        # Thin black lines for borders
-        ("LINEABOVE", (0, 0), (-1, 0), 0.5, colors.black),
-        ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.black),
-        ("LINEBELOW", (0, -1), (-1, -1), 0.5, colors.black),
-        # Alternating row backgrounds
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 3),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-        ("TOPPADDING", (0, 0), (-1, -1), 1.5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5),
-    ]
-    t.setStyle(TableStyle(style_cmds))
-    return t
-
-
-def _build_drawdown_table(dd_df: pd.DataFrame) -> Table | None:
-    """Build formal drawdown table."""
+def _build_drawdown_table(dd_df: pd.DataFrame, col_widths=None) -> Table | None:
+    """Build formal drawdown table matching R report style."""
     if dd_df.empty:
         return None
 
@@ -142,24 +77,25 @@ def _build_drawdown_table(dd_df: pd.DataFrame) -> Table | None:
         recovery = row["Recovery"].strftime("%d-%m-%Y") if pd.notna(row.get("Recovery")) else "ongoing"
         data.append([start, trough, recovery, f"{row['Max Drawdown (%)']:.2f}", str(row["Duration"])])
 
-    col_widths = [17 * mm, 17 * mm, 17 * mm, 14 * mm, 11 * mm]
+    if col_widths is None:
+        col_widths = [20 * mm, 20 * mm, 20 * mm, 18 * mm, 14 * mm]
     t = Table(data, colWidths=col_widths)
     style_cmds = [
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 4.5),
-        ("FONTSIZE", (0, 1), (-1, -1), 4.5),
+        ("FONTSIZE", (0, 0), (-1, 0), 7),
+        ("FONTSIZE", (0, 1), (-1, -1), 6.5),
         ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("ALIGN", (3, 0), (4, -1), "RIGHT"),
         ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
-        ("LINEABOVE", (0, 0), (-1, 0), 0.5, colors.black),
-        ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.black),
-        ("LINEBELOW", (0, -1), (-1, -1), 0.5, colors.black),
+        ("LINEABOVE", (0, 0), (-1, 0), 0.6, colors.black),
+        ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.black),
+        ("LINEBELOW", (0, -1), (-1, -1), 0.6, colors.black),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 2),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-        ("TOPPADDING", (0, 0), (-1, -1), 1.2),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2),
+        ("LEFTPADDING", (0, 0), (-1, -1), 3),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (-1, -1), 2),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
     ]
     t.setStyle(TableStyle(style_cmds))
     return t
@@ -188,40 +124,24 @@ def generate_backtest_pdf(
     usable_w = page_w - margin_l - margin_r
     usable_h = page_h - margin_t - margin_b
 
-    # Layout: fixed middle height then bottom row immediately below
+    # Layout matching R template (textpos absolute positions):
+    #   Header:  top 14mm
+    #   Middle:  stats/drawdown/monthly on left (48%), perf chart on right (50%)
+    #   Bottom:  3 charts side by side
+    # R positions (from page top): perf at 46mm, stats at 55mm, monthly at 138mm, bottom at 170mm
     header_h = 14 * mm
-    middle_section_h = 125 * mm  # ~4.9" for stats/perf chart area
-    bottom_chart_h = 55 * mm     # bottom row charts
-    bottom_gap = 3 * mm
 
-    # Compute positions (reportlab y = 0 at page bottom)
-    middle_top_y = page_h - margin_t - header_h - 2 * mm
-    middle_bottom_y = middle_top_y - middle_section_h
-    middle_h = middle_section_h
-
-    bottom_row_top = middle_bottom_y - bottom_gap
-    bottom_row_y = bottom_row_top - bottom_chart_h
-
-    left_w = usable_w * 0.48
-    right_w = usable_w * 0.50
+    # Left column = 50% of usable, right column = 48% (perf chart needs less)
+    left_w = usable_w * 0.50
+    right_w = usable_w * 0.48
     col_gap = usable_w * 0.02
 
     # --- Styles ---
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        "BTTitle", parent=styles["Title"], fontSize=13,
-        textColor=colors.black, fontName="Times-Bold",
-        leading=15, spaceAfter=1 * mm,
-    )
-    subtitle_style = ParagraphStyle(
-        "BTSubtitle", parent=styles["Normal"], fontSize=7,
-        textColor=colors.Color(0.3, 0.3, 0.3), fontName="Times-Roman",
-        leading=9, spaceAfter=0,
-    )
     section_style = ParagraphStyle(
-        "BTSection", parent=styles["Normal"], fontSize=7,
-        textColor=colors.black, fontName="Times-Bold",
-        leading=9, spaceBefore=1.5 * mm, spaceAfter=1 * mm,
+        "BTSection", parent=styles["Normal"], fontSize=9,
+        textColor=colors.black, fontName="Helvetica-Bold",
+        leading=11, spaceBefore=2 * mm, spaceAfter=1.5 * mm,
     )
 
     # --- Compute data ---
@@ -238,7 +158,7 @@ def generate_backtest_pdf(
     else:
         stats["Days to Recovery"] = "N/A"
 
-    # Rename metrics for R-style display
+    # Build ordered stats dict matching R report labels
     renamed_stats = {}
     key_order = [
         "Total Return (% AUM)",
@@ -256,26 +176,26 @@ def generate_backtest_pdf(
     # Add yearly returns
     for k in sorted(stats.keys()):
         if k.startswith("Return since"):
-            # Convert "Return since 1 Jan 2020 (%)" -> "Total Return since 1 Jan 2020 (% AUM)"
             display_k = "Total " + k
             if "(% AUM)" not in display_k:
                 display_k = display_k.replace("(%)", "(% AUM)")
             renamed_stats[display_k] = stats[k]
 
-    # --- Generate charts as base64 (sized for portrait A4) ---
-    # Right column performance chart — 3-panel, should be tall (like R: fig.width=4, fig.height=5)
-    perf_fig_w = right_w / (25.4)  # mm to inches
-    perf_fig_h = middle_h / (25.4) * 0.92  # fill most of middle section height
+    # --- Generate charts ---
+    # Right column: 3-panel performance chart (R: fig.width=4, fig.height=5)
+    perf_fig_w = right_w / 25.4
+    perf_fig_h = perf_fig_w * 1.3  # ~5" tall for a ~3.7" wide chart
     perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance",
                                                    figsize=(perf_fig_w, perf_fig_h))
-    # Monthly bar in left column
-    monthly_fig_w = left_w / (25.4)
-    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=(monthly_fig_w, 1.1))
 
-    # Bottom row: three charts, each ~62mm wide, compact landscape aspect
+    # Monthly bar (left column, wider than tall)
+    monthly_fig_w = left_w / 25.4
+    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=(monthly_fig_w, 1.3))
+
+    # Bottom row: three charts
     bot_chart_w = (usable_w - 4 * mm) / 3
-    bot_fig_w = bot_chart_w / (25.4)
-    bot_fig_h = bottom_chart_h / (25.4) * 0.85  # fill ~85% of frame height
+    bot_fig_w = bot_chart_w / 25.4
+    bot_fig_h = bot_fig_w * 0.75  # landscape aspect ratio
 
     try:
         hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=(bot_fig_w, bot_fig_h))
@@ -285,7 +205,12 @@ def generate_backtest_pdf(
     vol_b64 = charts.rolling_vol_chart_formal(daily_returns, figsize=(bot_fig_w, bot_fig_h))
     tz_b64 = charts.timezone_chart_formal(pnl_raw, figsize=(bot_fig_w, bot_fig_h))
 
-    # --- Build the PDF using canvas directly for precise positioning ---
+    # Second bottom row: timezone cumulative returns (R: fig.width=8.5, fig.height=2.5)
+    tz_cum_fig_w = usable_w / 25.4
+    tz_cum_b64 = charts.timezone_cumulative_returns_formal(
+        pnl_raw, daily_returns, figsize=(tz_cum_fig_w, 1.8))
+
+    # --- Build the PDF using canvas + frames for precise positioning ---
     from reportlab.pdfgen import canvas as canvasmod
     from reportlab.platypus.frames import Frame as RLFrame
 
@@ -295,34 +220,31 @@ def generate_backtest_pdf(
     x_start = margin_l
     y_top = page_h - margin_t
 
-    # Title
-    c.setFont("Times-Bold", 13)
+    # Title (R uses \Huge, we use 14pt bold)
+    c.setFont("Helvetica-Bold", 14)
     c.setFillColor(colors.black)
     title_text = f"{strategy} : {ccy_pair} : {timeframe} : {strat_dir}"
-    c.drawString(x_start, y_top - 4 * mm, title_text)
+    c.drawString(x_start, y_top - 5 * mm, title_text)
 
-    # Subtitle
-    c.setFont("Times-Roman", 7)
+    # Subtitle (trades file)
+    c.setFont("Helvetica", 8)
     c.setFillColor(colors.Color(0.3, 0.3, 0.3))
-    c.drawString(x_start, y_top - 9 * mm, f"Trades file: {filestem}")
+    c.drawString(x_start, y_top - 10 * mm, f"Trades file: {filestem}")
 
     # Horizontal rule
     c.setStrokeColor(colors.black)
     c.setLineWidth(0.5)
-    y_hrule = y_top - 12 * mm
+    y_hrule = y_top - 13 * mm
     c.line(x_start, y_hrule, page_w - margin_r, y_hrule)
 
-    # ---- LEFT COLUMN ----
+    # ---- LEFT COLUMN (stats tables + monthly chart) ----
     left_x = x_start
-    left_top = y_hrule - 2 * mm
-
-    # Use frames to place flowables in the left column
     left_story = []
 
     # Summary Statistics heading
-    left_story.append(Paragraph("Summary Statistics", section_style))
+    left_story.append(Paragraph("<b>Summary Statistics</b>", section_style))
 
-    # Summary stats table
+    # Summary stats table — matching R's xtable style with scalebox=0.7
     summary_data = [["", "Strategy"]]
     for label, val in renamed_stats.items():
         if isinstance(val, float):
@@ -331,66 +253,80 @@ def generate_backtest_pdf(
             val_str = str(val)
         summary_data.append([label, val_str])
 
-    col_w1 = left_w - 18 * mm
-    col_w2 = 17 * mm
+    col_w1 = left_w - 20 * mm
+    col_w2 = 19 * mm
     summary_tbl = Table(summary_data, colWidths=[col_w1, col_w2])
     summary_tbl.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 5),
-        ("FONTSIZE", (0, 1), (-1, -1), 4.8),
+        ("FONTSIZE", (0, 0), (-1, 0), 7),
+        ("FONTSIZE", (0, 1), (-1, -1), 6.5),
         ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("ALIGN", (1, 0), (1, -1), "RIGHT"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
-        ("LINEABOVE", (0, 0), (-1, 0), 0.4, colors.black),
-        ("LINEBELOW", (0, 0), (-1, 0), 0.4, colors.black),
-        ("LINEBELOW", (0, -1), (-1, -1), 0.4, colors.black),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.Color(0.94, 0.94, 0.94)]),
+        ("LINEABOVE", (0, 0), (-1, 0), 0.6, colors.black),
+        ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.black),
+        ("LINEBELOW", (0, -1), (-1, -1), 0.6, colors.black),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 2),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-        ("TOPPADDING", (0, 0), (-1, -1), 1.2),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2),
+        ("LEFTPADDING", (0, 0), (-1, -1), 3),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+        ("TOPPADDING", (0, 0), (-1, -1), 2),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
     ]))
     left_story.append(summary_tbl)
-    left_story.append(Spacer(1, 2 * mm))
+    left_story.append(Spacer(1, 3 * mm))
 
     # Drawdown heading and table
     if not dd_df.empty:
-        left_story.append(Paragraph("Drawdown Length and Recovery Times", section_style))
-        dd_tbl = _build_drawdown_table(dd_df)
+        left_story.append(Paragraph("<b>Drawdown Length and Recovery Times</b>", section_style))
+        dd_col_widths = [18 * mm, 18 * mm, 18 * mm, 24 * mm, 14 * mm]
+        dd_tbl = _build_drawdown_table(dd_df, col_widths=dd_col_widths)
         if dd_tbl:
             left_story.append(dd_tbl)
-        left_story.append(Spacer(1, 2 * mm))
+        left_story.append(Spacer(1, 3 * mm))
 
-    # Monthly returns bar chart (compact, in left column)
-    left_story.append(Paragraph("Monthly Returns (% AUM)", section_style))
+    # Monthly returns bar chart
+    left_story.append(Paragraph("<b>Monthly Returns (% AUM)</b>", section_style))
     monthly_img = _chart_image(monthly_b64, width=left_w - 2 * mm)
     left_story.append(monthly_img)
 
-    # Middle section: from below hrule to middle_bottom_y
-    mid_frame_top = y_hrule - 2 * mm
-    mid_frame_h = mid_frame_top - middle_bottom_y
+    # ---- Position frames ----
+    # R template positions (from page top):
+    #   Bottom row 1 (hist/vol/tz) at y=170mm, ~45mm tall
+    #   Bottom row 2 (tz cumulative) at y=220mm, ~45mm tall
+    row1_top_from_top = 168 * mm
+    row1_h = 45 * mm
+    row2_top_from_top = 218 * mm
+    row2_h = 40 * mm
 
-    # Draw left column using a Frame
-    left_frame = RLFrame(left_x, middle_bottom_y, left_w, mid_frame_h,
+    row1_top_y = page_h - row1_top_from_top  # reportlab y
+    row1_y = row1_top_y - row1_h
+    row2_top_y = page_h - row2_top_from_top
+    row2_y = row2_top_y - row2_h
+
+    mid_frame_top = y_hrule - 1 * mm
+    mid_frame_bottom = row1_top_y + 2 * mm
+    mid_frame_h = mid_frame_top - mid_frame_bottom
+
+    # Draw left column
+    left_frame = RLFrame(left_x, mid_frame_bottom, left_w, mid_frame_h,
                          leftPadding=0, rightPadding=0,
                          topPadding=0, bottomPadding=0)
     left_frame.addFromList(left_story, c)
 
-    # ---- RIGHT COLUMN (Performance charts) ----
+    # ---- RIGHT COLUMN (Performance chart) ----
     right_x = left_x + left_w + col_gap
-
     right_story = []
-    perf_img = _chart_image(perf_b64, width=right_w - 2 * mm, height=mid_frame_h - 2 * mm)
+    perf_img = _chart_image(perf_b64, width=right_w - 2 * mm, height=mid_frame_h - 1 * mm)
     right_story.append(perf_img)
 
-    right_frame = RLFrame(right_x, middle_bottom_y, right_w, mid_frame_h,
+    right_frame = RLFrame(right_x, mid_frame_bottom, right_w, mid_frame_h,
                           leftPadding=0, rightPadding=0,
                           topPadding=0, bottomPadding=0)
     right_frame.addFromList(right_story, c)
 
-    # ---- BOTTOM ROW (three charts side by side) ----
+    # ---- BOTTOM ROW 1 (three charts: histogram, volatility, timezone) ----
     chart_w = (usable_w - 4 * mm) / 3
 
     bottom_charts = []
@@ -403,11 +339,19 @@ def generate_backtest_pdf(
 
     for i, b64 in enumerate(bottom_charts):
         chart_x = x_start + i * (chart_w + 2 * mm)
-        frame_story = [_chart_image(b64, width=chart_w - 1 * mm, height=bottom_chart_h - 2 * mm)]
-        bottom_frame = RLFrame(chart_x, bottom_row_y, chart_w, bottom_chart_h,
+        img = _chart_image(b64, width=chart_w - 1 * mm, height=row1_h - 2 * mm)
+        frame_story = [img]
+        bottom_frame = RLFrame(chart_x, row1_y, chart_w, row1_h,
                                leftPadding=0, rightPadding=0,
                                topPadding=0, bottomPadding=0)
         bottom_frame.addFromList(frame_story, c)
+
+    # ---- BOTTOM ROW 2 (timezone cumulative returns: London, NY, Asia) ----
+    tz_cum_img = _chart_image(tz_cum_b64, width=usable_w, height=row2_h - 2 * mm)
+    row2_frame = RLFrame(x_start, row2_y, usable_w, row2_h,
+                         leftPadding=0, rightPadding=0,
+                         topPadding=0, bottomPadding=0)
+    row2_frame.addFromList([tz_cum_img], c)
 
     c.save()
     return pdf_path
