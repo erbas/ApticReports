@@ -131,9 +131,9 @@ def generate_backtest_pdf(
     # R positions (from page top): perf at 46mm, stats at 55mm, monthly at 138mm, bottom at 170mm
     header_h = 14 * mm
 
-    # Left column = 50% of usable, right column = 48% (perf chart needs less)
-    left_w = usable_w * 0.50
-    right_w = usable_w * 0.48
+    # Left column = 42% of usable (stats tables), right column = 56% (perf chart)
+    left_w = usable_w * 0.42
+    right_w = usable_w * 0.56
     col_gap = usable_w * 0.02
 
     # --- Styles ---
@@ -205,13 +205,14 @@ def generate_backtest_pdf(
     _scale = 2.0  # render at 2× PDF size for readable text
     perf_fig = (perf_pdf_w / 25.4 * _scale, perf_pdf_h / 25.4 * _scale)
     perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance",
-                                                   figsize=perf_fig)
+                                                   figsize=perf_fig, fontscale=_scale)
 
     # Monthly bar (left column, wide and short)
     monthly_pdf_w = left_w - 2 * mm  # ~93mm
-    monthly_pdf_h = 25 * mm
+    monthly_pdf_h = 33 * mm
     monthly_fig = (monthly_pdf_w / 25.4 * _scale, monthly_pdf_h / 25.4 * _scale)
-    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=monthly_fig)
+    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=monthly_fig,
+                                                      fontscale=_scale)
 
     # Bottom row 1: three charts, each ~60mm × 43mm
     bot_chart_w = (usable_w - 4 * mm) / 3
@@ -220,19 +221,22 @@ def generate_backtest_pdf(
     bot_fig = (bot_pdf_w / 25.4 * _scale, bot_pdf_h / 25.4 * _scale)
 
     try:
-        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=bot_fig)
+        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=bot_fig,
+                                                       fontscale=_scale)
     except Exception:
         hist_b64 = None
 
-    vol_b64 = charts.rolling_vol_chart_formal(daily_returns, figsize=bot_fig)
-    tz_b64 = charts.timezone_chart_formal(pnl_raw, figsize=bot_fig)
+    vol_b64 = charts.rolling_vol_chart_formal(daily_returns, figsize=bot_fig,
+                                                fontscale=_scale)
+    tz_b64 = charts.timezone_chart_formal(pnl_raw, aum=aum, figsize=bot_fig,
+                                           fontscale=_scale)
 
     # Bottom row 2: timezone cumulative, full width ~190mm × 38mm
     tz_cum_pdf_w = usable_w
     tz_cum_pdf_h = row2_h - 2 * mm
     tz_cum_fig = (tz_cum_pdf_w / 25.4 * _scale, tz_cum_pdf_h / 25.4 * _scale)
     tz_cum_b64 = charts.timezone_cumulative_returns_formal(
-        pnl_raw, daily_returns, figsize=tz_cum_fig)
+        pnl_raw, daily_returns, aum=aum, figsize=tz_cum_fig, fontscale=_scale)
 
     # --- Build the PDF using canvas + frames for precise positioning ---
     from reportlab.pdfgen import canvas as canvasmod
@@ -304,7 +308,7 @@ def generate_backtest_pdf(
     # Drawdown heading and table
     if not dd_df.empty:
         left_story.append(Paragraph("<b>Drawdown Length and Recovery Times</b>", section_style))
-        dd_col_widths = [18 * mm, 18 * mm, 18 * mm, 24 * mm, 14 * mm]
+        dd_col_widths = [15 * mm, 15 * mm, 15 * mm, 20 * mm, 13 * mm]
         dd_tbl = _build_drawdown_table(dd_df, col_widths=dd_col_widths)
         if dd_tbl:
             left_story.append(dd_tbl)

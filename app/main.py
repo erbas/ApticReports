@@ -285,24 +285,33 @@ async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
         daily_returns = result["pnl_daily"] / aum
         stats = compute_all_metrics(daily_returns, result["pnl_raw"], aum)
 
-        # Generate charts
-        from app.reporting.charts import (performance_summary, monthly_returns_bar,
-                                         rolling_vol_chart, returns_histogram, timezone_chart_formal)
-        perf_chart = performance_summary(daily_returns,
-                                         title=f"{strategy} {result['ccy_pair']}")
-        monthly_chart = monthly_returns_bar(daily_returns)
-        vol_chart = rolling_vol_chart(daily_returns)
+        # Generate charts (formal style matching R report)
+        from app.reporting.charts import (
+            performance_summary_formal, monthly_returns_bar_formal,
+            rolling_vol_chart_formal, returns_histogram_formal,
+            timezone_chart_formal, timezone_cumulative_returns_formal,
+        )
+        perf_chart = performance_summary_formal(daily_returns,
+                                                title=f"{strategy} {result['ccy_pair']}")
+        monthly_chart = monthly_returns_bar_formal(daily_returns)
+        vol_chart = rolling_vol_chart_formal(daily_returns)
 
         # Additional charts (histogram, timezone)
         try:
-            hist_chart = returns_histogram(result["pnl_raw"], aum)
+            hist_chart = returns_histogram_formal(result["pnl_raw"], aum)
         except Exception:
             hist_chart = None
 
         try:
-            tz_chart = timezone_chart_formal(result["pnl_raw"])
+            tz_chart = timezone_chart_formal(result["pnl_raw"], aum=aum)
         except Exception:
             tz_chart = None
+
+        try:
+            tz_cum_chart = timezone_cumulative_returns_formal(
+                result["pnl_raw"], daily_returns, aum=aum)
+        except Exception:
+            tz_cum_chart = None
 
         # Generate PDF
         from app.reporting.pdf_report import generate_backtest_pdf
@@ -329,6 +338,8 @@ async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
             chart_elements.append(chart_img(hist_chart, "Returns Histogram"))
         if tz_chart:
             chart_elements.append(chart_img(tz_chart, "Timezone Analysis"))
+        if tz_cum_chart:
+            chart_elements.append(chart_img(tz_cum_chart, "Timezone Cumulative Returns"))
 
         return Div(
             H3(f"Results: {strategy} {result['ccy_pair']} {timeframe} {result['strat_dir']}"),
