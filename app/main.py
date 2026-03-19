@@ -1,10 +1,16 @@
 """ApticReports — FastHTML web app for backtest processing and portfolio reporting."""
 
 import os
+import sys
 import hashlib
 import hmac
 import uuid
 import traceback
+
+# Ensure repo root is on sys.path so `from app.…` works regardless of how the script is launched
+_repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
 from fasthtml.common import *
 
@@ -22,7 +28,7 @@ os.makedirs(EOD_DIR, exist_ok=True)
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "aptic2024")
-LOGIN_SKIP = frozenset(["/login", "/static"])
+LOGIN_SKIP = frozenset(["/login", "/style.css"])
 
 
 def _check_auth(req, sess):
@@ -35,7 +41,7 @@ def _check_auth(req, sess):
 
 bware = Beforeware(_check_auth, skip=list(LOGIN_SKIP))
 
-custom_css = Link(rel="stylesheet", href="/static/style.css")
+custom_css = Link(rel="stylesheet", href="/style.css")
 app, rt = fast_app(
     hdrs=[custom_css],
     static_path=os.path.join(os.path.dirname(__file__), "static"),
