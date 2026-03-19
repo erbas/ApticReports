@@ -569,3 +569,74 @@ def correlation_heatmap(strategy_returns: pd.DataFrame) -> str:
     ax.set_title("Strategy Correlations")
     fig.tight_layout()
     return _fig_to_base64(fig)
+
+
+# ---------------------------------------------------------------------------
+# Portfolio formal charts
+# ---------------------------------------------------------------------------
+
+def portfolio_strategies_formal(portfolio: pd.Series, strategy_returns: pd.DataFrame,
+                                 rel_returns: bool = False,
+                                 figsize=(10, 4), fontscale: float = 1.0) -> str:
+    """Cumulative returns of portfolio vs individual strategies (formal style). Returns base64 PNG."""
+    s = fontscale
+    fig, ax = plt.subplots(figsize=figsize)
+    fig.patch.set_facecolor("white")
+
+    cum_ptf = portfolio.cumsum() * 100
+    ax.plot(cum_ptf.index, cum_ptf.values, color="black", linewidth=2.0 * s, label="Portfolio")
+
+    colors_arr = plt.cm.Set2(np.linspace(0, 1, max(strategy_returns.shape[1], 1)))
+    for i, col in enumerate(strategy_returns.columns):
+        cum_s = strategy_returns[col].cumsum() * 100
+        ax.plot(cum_s.index, cum_s.values, color=colors_arr[i], linewidth=0.8 * s,
+                label=col, alpha=0.7)
+
+    title = "Average Portfolio and Strategies" if rel_returns else "Portfolio and Strategies"
+    ax.set_title(title, fontsize=11 * s, fontweight="bold", color="black", fontfamily="serif")
+    ax.set_ylabel("Cumulative Return (% AUM)", fontsize=10 * s, color=_DARK_GRAY)
+    ax.legend(fontsize=7 * s, ncol=3, loc="best")
+    ax.axhline(0, color=_LIGHT_GRAY, linewidth=0.3 * s)
+    _apply_formal_style(ax, fontsize=9, fontscale=s)
+
+    effective_w = figsize[0] / s
+    yi = 1 if effective_w > 3 else 2
+    _format_date_axis(ax, fontsize=9, fontscale=s, year_interval=yi)
+    fig.tight_layout(pad=0.5)
+    return _fig_to_base64(fig)
+
+
+def correlation_heatmap_formal(strategy_returns: pd.DataFrame,
+                                figsize=(6, 5), fontscale: float = 1.0) -> str:
+    """Correlation heatmap of strategies (formal style). Returns base64 PNG."""
+    s = fontscale
+    if strategy_returns.shape[1] < 2:
+        fig, ax = plt.subplots(figsize=figsize)
+        fig.patch.set_facecolor("white")
+        ax.text(0.5, 0.5, "Need 2+ strategies", ha="center", va="center",
+                fontsize=12 * s, color=_DARK_GRAY)
+        return _fig_to_base64(fig)
+
+    corr = strategy_returns.corr()
+    fig, ax = plt.subplots(figsize=figsize)
+    fig.patch.set_facecolor("white")
+    im = ax.imshow(corr, cmap="RdBu_r", vmin=-1, vmax=1, aspect="auto")
+    fig.colorbar(im, ax=ax, shrink=0.8)
+
+    n = len(corr)
+    ax.set_xticks(range(n))
+    ax.set_yticks(range(n))
+    labels = [str(i + 1) for i in range(n)]
+    ax.set_xticklabels(labels, fontsize=8 * s)
+    ax.set_yticklabels(labels, fontsize=8 * s)
+
+    if n <= 10:
+        for i in range(n):
+            for j in range(n):
+                ax.text(j, i, f"{corr.iloc[i, j]:.2f}", ha="center", va="center",
+                        fontsize=7 * s)
+
+    ax.set_title("Strategy Correlations", fontsize=11 * s, fontweight="bold",
+                 color="black", fontfamily="serif")
+    fig.tight_layout(pad=0.5)
+    return _fig_to_base64(fig)

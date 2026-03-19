@@ -5,13 +5,12 @@ import os
 from datetime import datetime
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak,
-    KeepTogether, BaseDocTemplate, Frame, PageTemplate, Flowable,
+    Paragraph, Spacer, Table, TableStyle, Image, Flowable,
 )
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -355,125 +354,224 @@ def generate_portfolio_pdf(
     rel_returns: bool,
     output_path: str,
 ) -> str:
-    """Generate a portfolio PDF report. Returns path to PDF file."""
+    """Generate a single-page portrait A4 portfolio PDF report. Returns path to PDF file."""
+    from reportlab.pdfgen import canvas as canvasmod
+    from reportlab.platypus.frames import Frame as RLFrame
+
     pdf_path = os.path.join(output_path, f"{report_name}.pdf")
-    doc = SimpleDocTemplate(pdf_path, pagesize=landscape(A4),
-                            leftMargin=15 * mm, rightMargin=15 * mm,
-                            topMargin=15 * mm, bottomMargin=15 * mm)
 
+    page_w, page_h = A4  # 210 x 297 mm (portrait)
+    margin_l = 10 * mm
+    margin_r = 10 * mm
+    margin_t = 10 * mm
+    margin_b = 8 * mm
+
+    usable_w = page_w - margin_l - margin_r
+    usable_h = page_h - margin_t - margin_b
+
+    header_h = 14 * mm
+    _scale = 2.0
+
+    # --- Styles ---
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle("Title2", parent=styles["Title"], fontSize=18,
-                                 textColor=colors.HexColor("#2E86AB"))
-    subtitle_style = ParagraphStyle("Subtitle", parent=styles["Normal"], fontSize=10,
-                                    textColor=colors.grey)
-    section_style = ParagraphStyle("Section", parent=styles["Heading2"], fontSize=12,
-                                   textColor=colors.HexColor("#2E86AB"))
+    section_style = ParagraphStyle(
+        "PTFSection", parent=styles["Normal"], fontSize=8,
+        textColor=colors.black, fontName="Helvetica-Bold",
+        leading=9, spaceBefore=1 * mm, spaceAfter=1 * mm,
+    )
 
-    story = []
-
-    # Title
-    story.append(Paragraph(f"Portfolio Report: {report_name}", title_style))
-    agg_method = "Average Returns" if rel_returns else "Sum of Cash PnL"
-    story.append(Paragraph(f"Aggregation: {agg_method}", subtitle_style))
-    story.append(Paragraph(f"Generated: {datetime.now().strftime('%d %b %Y %H:%M')}", subtitle_style))
-    story.append(Spacer(1, 8 * mm))
-
-    # Summary statistics for portfolio and benchmark columns
-    story.append(Paragraph("Summary Statistics", section_style))
+    # --- Compute data ---
     stats = {}
     for col in ptf_daily.columns:
         col_stats = metrics.compute_all_metrics(ptf_daily[col])
         stats[col] = col_stats
 
-    # Build multi-column table
+    dd_df = metrics.drawdown_table(portfolio, top=5)
+
+    # --- Layout geometry ---
+    # Middle section: left 50% (stats + drawdown), right 48% (performance chart)
+    left_w = usable_w * 0.50
+    right_w = usable_w * 0.48
+    col_gap = usable_w * 0.02
+
+    # Row positions (from page top)
+    row1_top_from_top = 170 * mm
+    row1_h = 40 * mm
+    row2_top_from_top = 215 * mm
+    row2_h = 45 * mm
+
+    row1_top_y = page_h - row1_top_from_top
+    row1_y = row1_top_y - row1_h
+    row2_top_y = page_h - row2_top_from_top
+    row2_y = row2_top_y - row2_h
+
+    mid_frame_top = (page_h - margin_t - 13 * mm) - 1 * mm
+    mid_frame_bottom = row1_top_y + 2 * mm
+    mid_frame_h = mid_frame_top - mid_frame_bottom
+
+    # --- Generate charts ---
+    # Performance chart (right column)
+    perf_pdf_w = right_w - 2 * mm
+    perf_pdf_h = perf_pdf_w * 1.3
+    perf_fig = (perf_pdf_w / 72 * _scale, perf_pdf_h / 72 * _scale)
+    perf_b64 = charts.performance_summary_formal(portfolio, title=report_name,
+                                                   figsize=perf_fig, fontscale=_scale)
+
+    # Portfolio vs strategies (full width row)
+    row1_pdf_w = usable_w
+    row1_pdf_h = row1_h - 2 * mm
+    row1_fig = (row1_pdf_w / 72 * _scale, row1_pdf_h / 72 * _scale)
+    strat_b64 = charts.portfolio_strategies_formal(portfolio, strategy_returns, rel_returns,
+                                                     figsize=row1_fig, fontscale=_scale)
+
+    # Bottom row: correlation heatmap (left) + rolling vol (right)
+    has_corr = strategy_returns.shape[1] >= 2
+    if has_corr:
+        half_w = usable_w * 0.48
+        corr_pdf_w = half_w
+        corr_pdf_h = row2_h - 2 * mm
+        corr_fig = (corr_pdf_w / 72 * _scale, corr_pdf_h / 72 * _scale)
+        corr_b64 = charts.correlation_heatmap_formal(strategy_returns,
+                                                       figsize=corr_fig, fontscale=_scale)
+
+        vol_pdf_w = half_w
+        vol_pdf_h = row2_h - 2 * mm
+        vol_fig = (vol_pdf_w / 72 * _scale, vol_pdf_h / 72 * _scale)
+        vol_b64 = charts.rolling_vol_chart_formal(portfolio,
+                                                    figsize=vol_fig, fontscale=_scale)
+    else:
+        # Rolling vol gets full width
+        vol_pdf_w = usable_w
+        vol_pdf_h = row2_h - 2 * mm
+        vol_fig = (vol_pdf_w / 72 * _scale, vol_pdf_h / 72 * _scale)
+        vol_b64 = charts.rolling_vol_chart_formal(portfolio,
+                                                    figsize=vol_fig, fontscale=_scale)
+        corr_b64 = None
+
+    # --- Build the PDF using canvas ---
+    c = canvasmod.Canvas(pdf_path, pagesize=A4)
+
+    # ---- HEADER ----
+    x_start = margin_l
+    y_top = page_h - margin_t
+
+    c.setFont("Helvetica-Bold", 14)
+    c.setFillColor(colors.black)
+    c.drawString(x_start, y_top - 5 * mm, f"Portfolio: {report_name}")
+
+    c.setFont("Helvetica", 8)
+    c.setFillColor(colors.Color(0.3, 0.3, 0.3))
+    agg_method = "Average Returns" if rel_returns else "Sum of Cash PnL"
+    c.drawString(x_start, y_top - 10 * mm, f"Aggregation: {agg_method}")
+    c.drawRightString(page_w - margin_r, y_top - 10 * mm,
+                      f"Generated: {datetime.now().strftime('%d %b %Y %H:%M')}")
+
+    c.setStrokeColor(colors.black)
+    c.setLineWidth(0.5)
+    y_hrule = y_top - 13 * mm
+    c.line(x_start, y_hrule, page_w - margin_r, y_hrule)
+
+    # ---- LEFT COLUMN (stats + drawdown tables) ----
+    left_x = x_start
+    left_story = []
+
+    # Summary Statistics heading
+    left_story.append(Paragraph("<b>Summary Statistics</b>", section_style))
+
+    # Multi-column stats table
     metric_names = list(next(iter(stats.values())).keys())
-    header = ["Metric"] + list(stats.keys())
+    header = [""] + list(stats.keys())
     data = [header]
     for m in metric_names:
         row = [m]
-        for col in stats:
-            v = stats[col].get(m, "")
+        for col_name in stats:
+            v = stats[col_name].get(m, "")
             row.append(f"{v:.2f}" if isinstance(v, float) else str(v))
         data.append(row)
 
     n_cols = len(header)
-    col_widths = [80 * mm] + [35 * mm] * (n_cols - 1)
-    t = Table(data, colWidths=col_widths[:n_cols])
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2E86AB")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+    label_w = left_w - 18 * mm * min(n_cols - 1, 3)
+    val_w = 18 * mm
+    col_widths = [max(label_w, 20 * mm)] + [val_w] * (n_cols - 1)
+    # Ensure total doesn't exceed left_w
+    total = sum(col_widths[:n_cols])
+    if total > left_w:
+        scale_f = left_w / total
+        col_widths = [w * scale_f for w in col_widths]
+
+    summary_tbl = Table(data, colWidths=col_widths[:n_cols])
+    summary_tbl.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 7),
+        ("FONTSIZE", (0, 0), (-1, 0), 7),
+        ("FONTSIZE", (0, 1), (-1, -1), 6),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F0F4F8")]),
+        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+        ("LINEABOVE", (0, 0), (-1, 0), 0.6, colors.black),
+        ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.black),
+        ("LINEBELOW", (0, -1), (-1, -1), 0.6, colors.black),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 2),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+        ("LEFTPADDING", (0, 0), (-1, -1), 2),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+        ("TOPPADDING", (0, 0), (-1, -1), 1),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
     ]))
-    story.append(t)
-    story.append(Spacer(1, 5 * mm))
+    left_story.append(summary_tbl)
+    left_story.append(Spacer(1, 1.5 * mm))
 
     # Drawdown table
-    dd_df = metrics.drawdown_table(portfolio, top=5)
     if not dd_df.empty:
-        story.append(Paragraph("Drawdown Analysis", section_style))
-        dd_t = _drawdown_table_portfolio(dd_df)
-        if dd_t:
-            story.append(dd_t)
+        left_story.append(Paragraph("<b>Drawdown Analysis</b>", section_style))
+        dd_col_widths = [18 * mm, 18 * mm, 18 * mm, 18 * mm, 14 * mm]
+        dd_tbl = _build_drawdown_table(dd_df, col_widths=dd_col_widths)
+        if dd_tbl:
+            left_story.append(dd_tbl)
 
-    # Performance chart
-    story.append(PageBreak())
-    story.append(Paragraph("Performance Summary", section_style))
-    perf_b64 = charts.performance_summary(portfolio, title=report_name)
-    story.append(_chart_image(perf_b64, width=250 * mm))
+    # Draw left column
+    left_frame = RLFrame(left_x, mid_frame_bottom, left_w, mid_frame_h,
+                         leftPadding=0, rightPadding=0,
+                         topPadding=0, bottomPadding=0)
+    left_frame.addFromList(left_story, c)
 
-    # Portfolio vs strategies
-    story.append(PageBreak())
-    story.append(Paragraph("Portfolio vs Strategies", section_style))
-    strat_b64 = charts.portfolio_strategies_chart(portfolio, strategy_returns, rel_returns)
-    story.append(_chart_image(strat_b64, width=250 * mm))
+    # ---- RIGHT COLUMN (Performance chart) ----
+    right_x = left_x + left_w + col_gap
+    right_story = []
+    perf_img = _chart_image(perf_b64, width=perf_pdf_w, height=perf_pdf_h)
+    right_story.append(perf_img)
 
-    # Correlation heatmap
-    if strategy_returns.shape[1] >= 2:
-        story.append(Spacer(1, 5 * mm))
-        story.append(Paragraph("Strategy Correlations", section_style))
-        corr_b64 = charts.correlation_heatmap(strategy_returns)
-        story.append(_chart_image(corr_b64, width=140 * mm))
+    right_frame = RLFrame(right_x, mid_frame_bottom, right_w, mid_frame_h,
+                          leftPadding=0, rightPadding=0,
+                          topPadding=0, bottomPadding=0)
+    right_frame.addFromList(right_story, c)
 
-    # Rolling volatility
-    story.append(PageBreak())
-    story.append(Paragraph("Rolling Volatility", section_style))
-    vol_b64 = charts.rolling_vol_chart(portfolio)
-    story.append(_chart_image(vol_b64, width=160 * mm))
+    # ---- ROW 1: Portfolio vs Strategies (full width) ----
+    strat_img = _chart_image(strat_b64, width=row1_pdf_w, height=row1_pdf_h)
+    row1_frame = RLFrame(x_start, row1_y, usable_w, row1_h,
+                         leftPadding=0, rightPadding=0,
+                         topPadding=0, bottomPadding=0)
+    row1_frame.addFromList([strat_img], c)
 
-    doc.build(story)
+    # ---- ROW 2: Correlation heatmap + Rolling volatility ----
+    if has_corr and corr_b64:
+        corr_img = _chart_image(corr_b64, width=corr_pdf_w, height=corr_pdf_h)
+        corr_frame = RLFrame(x_start, row2_y, usable_w * 0.50, row2_h,
+                             leftPadding=0, rightPadding=0,
+                             topPadding=0, bottomPadding=0)
+        corr_frame.addFromList([corr_img], c)
+
+        vol_img = _chart_image(vol_b64, width=vol_pdf_w, height=vol_pdf_h)
+        vol_frame = RLFrame(x_start + usable_w * 0.52, row2_y, usable_w * 0.48, row2_h,
+                            leftPadding=0, rightPadding=0,
+                            topPadding=0, bottomPadding=0)
+        vol_frame.addFromList([vol_img], c)
+    else:
+        vol_img = _chart_image(vol_b64, width=vol_pdf_w, height=vol_pdf_h)
+        vol_frame = RLFrame(x_start, row2_y, usable_w, row2_h,
+                            leftPadding=0, rightPadding=0,
+                            topPadding=0, bottomPadding=0)
+        vol_frame.addFromList([vol_img], c)
+
+    c.save()
     return pdf_path
-
-
-def _drawdown_table_portfolio(dd_df: pd.DataFrame) -> Table | None:
-    """Build drawdown table for portfolio reports (original style)."""
-    if dd_df.empty:
-        return None
-
-    data = [["Start", "Trough", "Recovery", "Max DD (%)", "Duration"]]
-    for _, row in dd_df.iterrows():
-        start = row["Start"].strftime("%d-%m-%Y") if pd.notna(row["Start"]) else ""
-        trough = row["Trough"].strftime("%d-%m-%Y") if pd.notna(row["Trough"]) else ""
-        recovery = row["Recovery"].strftime("%d-%m-%Y") if pd.notna(row.get("Recovery")) else "ongoing"
-        data.append([start, trough, recovery, f"{row['Max Drawdown (%)']:.2f}", str(row["Duration"])])
-
-    t = Table(data, colWidths=[32 * mm, 32 * mm, 32 * mm, 25 * mm, 20 * mm])
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E84855")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 7),
-        ("ALIGN", (3, 0), (-1, -1), "RIGHT"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#FFF0F0")]),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 2),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-    ]))
-    return t

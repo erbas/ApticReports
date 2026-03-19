@@ -468,14 +468,16 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
         from app.reporting.metrics import compute_all_metrics
         stats = compute_all_metrics(result["portfolio"])
 
-        # Charts
+        # Charts (formal style, matching backtest)
         from app.reporting.charts import (
-            performance_summary, portfolio_strategies_chart, correlation_heatmap,
+            performance_summary_formal, portfolio_strategies_formal,
+            correlation_heatmap_formal, rolling_vol_chart_formal,
         )
-        perf_chart = performance_summary(result["portfolio"], title=report_name)
-        strat_chart = portfolio_strategies_chart(
+        perf_chart = performance_summary_formal(result["portfolio"], title=report_name)
+        strat_chart = portfolio_strategies_formal(
             result["portfolio"], result["strategy_returns"], rel_returns
         )
+        vol_chart = rolling_vol_chart_formal(result["portfolio"])
 
         # Generate PDF
         from app.reporting.pdf_report import generate_portfolio_pdf
@@ -493,7 +495,7 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
         # Correlation heatmap (if multiple strategies)
         corr_html = ""
         if result["strategy_returns"].shape[1] >= 2:
-            corr_chart = correlation_heatmap(result["strategy_returns"])
+            corr_chart = correlation_heatmap_formal(result["strategy_returns"])
             corr_html = chart_img(corr_chart, "Strategy Correlations")
 
         # Strategy metadata table
@@ -520,6 +522,7 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
             chart_img(perf_chart, "Performance Summary"),
             chart_img(strat_chart, "Portfolio vs Strategies"),
             corr_html,
+            chart_img(vol_chart, "Rolling Volatility"),
             download_links({
                 "Daily PnL CSV": result["files"]["daily"],
                 "Monthly PnL CSV": result["files"]["monthly"],
