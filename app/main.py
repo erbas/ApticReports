@@ -260,7 +260,7 @@ async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
             f.write(content)
 
         # Process
-        from .processing.daily_pnl import process_backtest
+        from app.processing.daily_pnl import process_backtest
         result = process_backtest(
             filepath=save_path,
             eod_path=EOD_DIR,
@@ -274,18 +274,18 @@ async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
         )
 
         # Compute metrics
-        from .reporting.metrics import compute_all_metrics
+        from app.reporting.metrics import compute_all_metrics
         daily_returns = result["pnl_daily"] / aum
         stats = compute_all_metrics(daily_returns, result["pnl_raw"], aum)
 
         # Generate charts
-        from .reporting.charts import performance_summary, monthly_returns_bar, rolling_vol_chart
+        from app.reporting.charts import performance_summary, monthly_returns_bar, rolling_vol_chart
         perf_chart = performance_summary(daily_returns,
                                          title=f"{strategy} {result['ccy_pair']}")
         monthly_chart = monthly_returns_bar(daily_returns)
 
         # Generate PDF
-        from .reporting.pdf_report import generate_backtest_pdf
+        from app.reporting.pdf_report import generate_backtest_pdf
         pdf_path = generate_backtest_pdf(
             daily_returns=daily_returns,
             pnl_raw=result["pnl_raw"],
@@ -411,7 +411,7 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
             saved_paths.append(save_path)
 
         # Process
-        from .processing.portfolio import combine_portfolio
+        from app.processing.portfolio import combine_portfolio
         result = combine_portfolio(
             filepaths=saved_paths,
             aum=aum,
@@ -425,11 +425,11 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
         )
 
         # Metrics
-        from .reporting.metrics import compute_all_metrics
+        from app.reporting.metrics import compute_all_metrics
         stats = compute_all_metrics(result["portfolio"])
 
         # Charts
-        from .reporting.charts import (
+        from app.reporting.charts import (
             performance_summary, portfolio_strategies_chart, correlation_heatmap,
         )
         perf_chart = performance_summary(result["portfolio"], title=report_name)
@@ -438,7 +438,7 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
         )
 
         # Generate PDF
-        from .reporting.pdf_report import generate_portfolio_pdf
+        from app.reporting.pdf_report import generate_portfolio_pdf
         pdf_path = generate_portfolio_pdf(
             ptf_daily=result["ptf_daily"],
             portfolio=result["portfolio"],
