@@ -597,4 +597,9 @@ def get(fname: str):
 
 # ── Run ──────────────────────────────────────────────────────────────────────
 
-serve(port=int(os.environ.get("PORT", 5001)), reload=os.environ.get("RENDER") is None)
+if __name__ == "__main__":
+    serve(
+        appname="app.main" if __package__ else None,
+        port=int(os.environ.get("PORT", 5001)),
+        reload=os.environ.get("RENDER") is None,
+    )
