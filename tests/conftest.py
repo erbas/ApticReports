@@ -27,7 +27,6 @@ def eod_dir(tmp_dir):
     path = os.path.join(tmp_dir, "EURUSD_EOD.csv")
     with open(path, "w") as f:
         f.write("Date,Price\n")  # real header
-        f.write("ignore,ignore\n")  # row that gets skipped (skiprows=1 in loader)
         for dt, px in zip(dates, prices):
             f.write(f"{dt.strftime('%d/%m/%Y')},{px:.5f}\n")
 
@@ -36,7 +35,6 @@ def eod_dir(tmp_dir):
     path_gbp = os.path.join(tmp_dir, "GBPUSD_EOD.csv")
     with open(path_gbp, "w") as f:
         f.write("Date,Price\n")
-        f.write("ignore,ignore\n")
         for dt, px in zip(dates, prices_gbp):
             f.write(f"{dt.strftime('%d/%m/%Y')},{px:.5f}\n")
 
@@ -45,7 +43,6 @@ def eod_dir(tmp_dir):
     path_jpy = os.path.join(tmp_dir, "USDJPY_EOD.csv")
     with open(path_jpy, "w") as f:
         f.write("Date,Price\n")
-        f.write("ignore,ignore\n")
         for dt, px in zip(dates, prices_jpy):
             f.write(f"{dt.strftime('%d/%m/%Y')},{px:.5f}\n")
 

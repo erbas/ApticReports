@@ -24,6 +24,7 @@ __pycache__/
 *.pyc
 uploads/
 output/
+data/eod/
 *.egg-info/
 .env
 .venv/

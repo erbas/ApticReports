@@ -93,11 +93,12 @@ def chart_img(b64: str, alt: str = "Chart"):
 
 def download_links(files: dict):
     """Render download buttons for generated files."""
+    from urllib.parse import quote
     links = []
     for label, path in files.items():
         if path and os.path.exists(path):
             fname = os.path.basename(path)
-            links.append(A(f"Download {label}", href=f"/download/{fname}"))
+            links.append(A(f"Download {label}", href=f"/dl?name={quote(fname)}"))
     return Div(*links, cls="downloads") if links else ""
 
 
@@ -593,12 +594,13 @@ def delete(fname: str):
 
 # ── File downloads ───────────────────────────────────────────────────────────
 
-@rt("/download/{fname:path}")
-def get(fname: str):
-    filepath = os.path.join(OUTPUT_DIR, fname)
+@rt("/dl")
+def get(name: str):
+    """Download output files. Uses query param to avoid FastHTML static route conflicts."""
+    filepath = os.path.join(OUTPUT_DIR, name)
     if not os.path.exists(filepath):
-        return error_box(f"File not found: {fname}")
-    return FileResponse(filepath, filename=fname)
+        return error_box(f"File not found: {name}")
+    return FileResponse(filepath, filename=name)
 
 
 # ── Run ──────────────────────────────────────────────────────────────────────
