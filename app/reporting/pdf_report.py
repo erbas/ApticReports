@@ -82,8 +82,8 @@ def _build_drawdown_table(dd_df: pd.DataFrame, col_widths=None) -> Table | None:
     t = Table(data, colWidths=col_widths)
     style_cmds = [
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 6.5),
-        ("FONTSIZE", (0, 1), (-1, -1), 6),
+        ("FONTSIZE", (0, 0), (-1, 0), 8),
+        ("FONTSIZE", (0, 1), (-1, -1), 7),
         ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("ALIGN", (3, 0), (4, -1), "RIGHT"),
         ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
@@ -215,22 +215,12 @@ def generate_backtest_pdf(
     monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=monthly_fig,
                                                       fontscale=_scale)
 
-    # Bottom row 1: three charts, each ~60mm × 43mm
-    bot_chart_w = (usable_w - 4 * mm) / 3
-    bot_pdf_w = bot_chart_w - 1 * mm
-    bot_pdf_h = row1_h - 2 * mm
-    bot_fig = (bot_pdf_w / 72 * _scale, bot_pdf_h / 72 * _scale)
-
-    try:
-        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=bot_fig,
-                                                       fontscale=_scale)
-    except Exception:
-        hist_b64 = None
-
-    vol_b64 = charts.rolling_vol_chart_formal(daily_returns, figsize=bot_fig,
-                                                fontscale=_scale)
-    tz_b64 = charts.timezone_chart_formal(pnl_raw, aum=aum, figsize=bot_fig,
-                                            fontscale=_scale)
+    # Bottom row 1: single 1×3 figure (histogram, volatility, timezone bar)
+    row1_pdf_w = usable_w
+    row1_pdf_h = row1_h - 2 * mm
+    row1_fig = (row1_pdf_w / 72 * _scale, row1_pdf_h / 72 * _scale)
+    row1_b64 = charts.bottom_row_charts_formal(pnl_raw, daily_returns, aum=aum,
+                                                 figsize=row1_fig, fontscale=_scale)
 
     # Bottom row 2: timezone cumulative, full width ~190mm × 38mm
     tz_cum_pdf_w = usable_w
@@ -287,8 +277,8 @@ def generate_backtest_pdf(
     summary_tbl = Table(summary_data, colWidths=[col_w1, col_w2])
     summary_tbl.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 6.5),
-        ("FONTSIZE", (0, 1), (-1, -1), 6),
+        ("FONTSIZE", (0, 0), (-1, 0), 8),
+        ("FONTSIZE", (0, 1), (-1, -1), 7),
         ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("ALIGN", (1, 0), (1, -1), "RIGHT"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
@@ -338,25 +328,12 @@ def generate_backtest_pdf(
                           topPadding=0, bottomPadding=0)
     right_frame.addFromList(right_story, c)
 
-    # ---- BOTTOM ROW 1 (three charts: histogram, volatility, timezone) ----
-    chart_w = (usable_w - 4 * mm) / 3
-
-    bottom_charts = []
-    if hist_b64:
-        bottom_charts.append(hist_b64)
-    else:
-        bottom_charts.append(vol_b64)
-    bottom_charts.append(vol_b64)
-    bottom_charts.append(tz_b64)
-
-    for i, b64 in enumerate(bottom_charts):
-        chart_x = x_start + i * (chart_w + 2 * mm)
-        img = _chart_image(b64, width=bot_pdf_w, height=bot_pdf_h)
-        frame_story = [img]
-        bottom_frame = RLFrame(chart_x, row1_y, chart_w, row1_h,
-                               leftPadding=0, rightPadding=0,
-                               topPadding=0, bottomPadding=0)
-        bottom_frame.addFromList(frame_story, c)
+    # ---- BOTTOM ROW 1 (single 1×3 figure: histogram, volatility, timezone) ----
+    row1_img = _chart_image(row1_b64, width=row1_pdf_w)
+    row1_frame = RLFrame(x_start, row1_y, usable_w, row1_h,
+                         leftPadding=0, rightPadding=0,
+                         topPadding=0, bottomPadding=0)
+    row1_frame.addFromList([row1_img], c)
 
     # ---- BOTTOM ROW 2 (timezone cumulative returns: London, NY, Asia) ----
     tz_cum_img = _chart_image(tz_cum_b64, width=tz_cum_pdf_w, height=tz_cum_pdf_h)
