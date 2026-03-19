@@ -36,10 +36,17 @@ def make_daily_pnl(
     # Parse entry/exit times in trade timezone, then convert to ref timezone
     # R's lubridate dmy_hms with truncated=1 handles both HH:MM:SS and HH:MM
     def _parse_datetimes(col):
-        try:
-            return pd.to_datetime(col, format="%d/%m/%Y %H:%M:%S")
-        except ValueError:
-            return pd.to_datetime(col, format="%d/%m/%Y %H:%M")
+        for fmt in (
+            "%d/%m/%Y %H:%M:%S",      # 24-hour with seconds
+            "%d/%m/%Y %H:%M",          # 24-hour without seconds
+            "%d/%m/%Y %I:%M:%S %p",    # 12-hour AM/PM with seconds
+            "%d/%m/%Y %I:%M %p",       # 12-hour AM/PM without seconds
+        ):
+            try:
+                return pd.to_datetime(col, format=fmt)
+            except ValueError:
+                continue
+        return pd.to_datetime(col, dayfirst=True, format="mixed")
 
     entries = _parse_datetimes(trades_csv["Entry.time"])
     exits = _parse_datetimes(trades_csv["Exit.time"])
