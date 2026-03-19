@@ -593,6 +593,16 @@ def delete(fname: str):
 
 # ── File downloads ───────────────────────────────────────────────────────────
 
+@app.route("/download/{fname:path}.{ext:static}")
+async def download_static(fname: str, ext: str):
+    """Override FastHTML's static route for /download/ paths."""
+    full = f"{fname}.{ext}"
+    filepath = os.path.join(OUTPUT_DIR, full)
+    if not os.path.exists(filepath):
+        return error_box(f"File not found: {full}")
+    return FileResponse(filepath, filename=full)
+
+
 @rt("/download/{fname:path}")
 def get(fname: str):
     filepath = os.path.join(OUTPUT_DIR, fname)
