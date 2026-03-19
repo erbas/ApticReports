@@ -188,10 +188,19 @@ def generate_backtest_pdf(
     usable_w = page_w - margin_l - margin_r
     usable_h = page_h - margin_t - margin_b
 
-    # Layout: header (14mm) | two-col middle (55%) | bottom 3-col (30%)
+    # Layout: fixed middle height then bottom row immediately below
     header_h = 14 * mm
-    bottom_h = usable_h * 0.30
-    middle_h = usable_h - header_h - bottom_h - 2 * mm
+    middle_section_h = 125 * mm  # ~4.9" for stats/perf chart area
+    bottom_chart_h = 55 * mm     # bottom row charts
+    bottom_gap = 3 * mm
+
+    # Compute positions (reportlab y = 0 at page bottom)
+    middle_top_y = page_h - margin_t - header_h - 2 * mm
+    middle_bottom_y = middle_top_y - middle_section_h
+    middle_h = middle_section_h
+
+    bottom_row_top = middle_bottom_y - bottom_gap
+    bottom_row_y = bottom_row_top - bottom_chart_h
 
     left_w = usable_w * 0.48
     right_w = usable_w * 0.50
@@ -254,18 +263,19 @@ def generate_backtest_pdf(
             renamed_stats[display_k] = stats[k]
 
     # --- Generate charts as base64 (sized for portrait A4) ---
-    # Right column performance chart — fits ~95mm wide
+    # Right column performance chart — 3-panel, should be tall (like R: fig.width=4, fig.height=5)
     perf_fig_w = right_w / (25.4)  # mm to inches
+    perf_fig_h = middle_h / (25.4) * 0.92  # fill most of middle section height
     perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance",
-                                                   figsize=(perf_fig_w, perf_fig_w * 0.85))
+                                                   figsize=(perf_fig_w, perf_fig_h))
     # Monthly bar in left column
     monthly_fig_w = left_w / (25.4)
     monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=(monthly_fig_w, 1.1))
 
-    # Bottom row: three charts, each ~60mm wide
+    # Bottom row: three charts, each ~62mm wide, compact landscape aspect
     bot_chart_w = (usable_w - 4 * mm) / 3
     bot_fig_w = bot_chart_w / (25.4)
-    bot_fig_h = bottom_h / (25.4) * 0.85
+    bot_fig_h = bottom_chart_h / (25.4) * 0.85  # fill ~85% of frame height
 
     try:
         hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=(bot_fig_w, bot_fig_h))
@@ -358,13 +368,12 @@ def generate_backtest_pdf(
     monthly_img = _chart_image(monthly_b64, width=left_w - 2 * mm)
     left_story.append(monthly_img)
 
-    # Middle section: from below hrule to above bottom row
-    middle_top = y_hrule - 2 * mm
-    middle_bottom = margin_b + bottom_h + 2 * mm
-    middle_frame_h = middle_top - middle_bottom
+    # Middle section: from below hrule to middle_bottom_y
+    mid_frame_top = y_hrule - 2 * mm
+    mid_frame_h = mid_frame_top - middle_bottom_y
 
     # Draw left column using a Frame
-    left_frame = RLFrame(left_x, middle_bottom, left_w, middle_frame_h,
+    left_frame = RLFrame(left_x, middle_bottom_y, left_w, mid_frame_h,
                          leftPadding=0, rightPadding=0,
                          topPadding=0, bottomPadding=0)
     left_frame.addFromList(left_story, c)
@@ -373,10 +382,10 @@ def generate_backtest_pdf(
     right_x = left_x + left_w + col_gap
 
     right_story = []
-    perf_img = _chart_image(perf_b64, width=right_w - 2 * mm)
+    perf_img = _chart_image(perf_b64, width=right_w - 2 * mm, height=mid_frame_h - 2 * mm)
     right_story.append(perf_img)
 
-    right_frame = RLFrame(right_x, middle_bottom, right_w, middle_frame_h,
+    right_frame = RLFrame(right_x, middle_bottom_y, right_w, mid_frame_h,
                           leftPadding=0, rightPadding=0,
                           topPadding=0, bottomPadding=0)
     right_frame.addFromList(right_story, c)
@@ -394,8 +403,8 @@ def generate_backtest_pdf(
 
     for i, b64 in enumerate(bottom_charts):
         chart_x = x_start + i * (chart_w + 2 * mm)
-        frame_story = [_chart_image(b64, width=chart_w - 1 * mm)]
-        bottom_frame = RLFrame(chart_x, margin_b, chart_w, bottom_h,
+        frame_story = [_chart_image(b64, width=chart_w - 1 * mm, height=bottom_chart_h - 2 * mm)]
+        bottom_frame = RLFrame(chart_x, bottom_row_y, chart_w, bottom_chart_h,
                                leftPadding=0, rightPadding=0,
                                topPadding=0, bottomPadding=0)
         bottom_frame.addFromList(frame_story, c)
