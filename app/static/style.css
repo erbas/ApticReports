@@ -6,44 +6,79 @@
     --bg-muted: #F0F4F8;
 }
 
-/* Tab navigation */
-.tabs {
+/* Header bar — high specificity to override Pico */
+main.container .app-header {
     display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.2rem;
+    padding-bottom: 0.3rem;
+}
+
+main.container .app-header h1 {
+    margin: 0;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+    color: #1a1a1a;
+}
+
+/* Tab navigation — override Pico's nav { justify-content: space-between } */
+main.container nav.tabs {
+    display: flex;
+    justify-content: flex-start;
     gap: 0;
     border-bottom: 2px solid var(--brand);
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
+    padding: 0;
 }
 
-.tabs a {
-    padding: 0.6rem 1.5rem;
+main.container nav.tabs a {
+    padding: 0.42rem 1.1rem;
     text-decoration: none;
-    color: #555;
-    font-weight: 600;
+    color: #666;
+    font-weight: 500;
+    font-size: 0.88rem;
     border: 2px solid transparent;
     border-bottom: none;
-    border-radius: 6px 6px 0 0;
+    border-radius: 5px 5px 0 0;
     margin-bottom: -2px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: color 0.15s, background 0.15s;
 }
 
-.tabs a.active, .tabs a[aria-selected="true"] {
+main.container nav.tabs a.active,
+main.container nav.tabs a[aria-selected="true"] {
     color: var(--brand);
+    font-weight: 600;
     background: white;
     border-color: var(--brand);
     border-bottom-color: white;
 }
 
-.tabs a:hover:not(.active) {
+main.container nav.tabs a:hover:not(.active) {
     color: var(--brand);
     background: var(--bg-muted);
+}
+
+/* Section headings */
+#tab-content h2 {
+    font-size: 1.15rem;
+    margin-bottom: 0.3rem;
+    color: #1a1a1a;
+}
+
+#tab-content > div > p:first-of-type {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 1rem;
 }
 
 /* Upload area */
 .upload-area {
     border: 2px dashed #ccc;
     border-radius: 8px;
-    padding: 2rem;
+    padding: 1.2rem;
     text-align: center;
     background: var(--bg-muted);
     transition: border-color 0.2s;
@@ -57,7 +92,7 @@
 .results-card {
     border: 1px solid #ddd;
     border-radius: 8px;
-    padding: 1.5rem;
+    padding: 1.2rem;
     margin-top: 1rem;
     background: white;
 }
@@ -65,33 +100,67 @@
 .results-card h3 {
     color: var(--brand);
     margin-top: 0;
+    font-size: 1.05rem;
 }
 
 /* Metrics grid */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.3rem;
+    margin-bottom: 0.8rem;
 }
 
 .metric-item {
     display: flex;
     justify-content: space-between;
-    padding: 0.3rem 0.5rem;
+    padding: 0.25rem 0.5rem;
     border-bottom: 1px solid #eee;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
 }
 
 .metric-item .label { color: #555; }
 .metric-item .value { font-weight: 600; }
 
-/* Chart container */
+/* Chart containers */
 .chart-container {
-    margin: 1rem 0;
+    margin: 0.6rem 0;
     text-align: center;
 }
 
 .chart-container img {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Chart sizing variants */
+.chart-wide {
+    margin: 0.6rem auto;
+    text-align: center;
+    max-width: 78%;
+}
+
+.chart-wide img {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chart-row {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin: 0.4rem 0;
+}
+
+.chart-half {
+    flex: 1 1 48%;
+    min-width: 280px;
+    text-align: center;
+}
+
+.chart-half img {
     max-width: 100%;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -161,15 +230,16 @@
 .param-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.8rem;
+    gap: 0.6rem;
 }
 
 .form-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .form-section h4 {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
     color: var(--brand);
 }
 

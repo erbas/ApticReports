@@ -56,10 +56,10 @@ def _format_date_axis(ax, fontsize=11, fontscale=1.0, year_interval=1):
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha="center", fontsize=fs)
 
 
-def _fig_to_base64(fig: plt.Figure) -> str:
+def _fig_to_base64(fig: plt.Figure, dpi: int = 120) -> str:
     """Convert matplotlib figure to base64 PNG string."""
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=200, bbox_inches="tight",
+    fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight",
                 pad_inches=0.05, facecolor="white", edgecolor="none")
     plt.close(fig)
     buf.seek(0)

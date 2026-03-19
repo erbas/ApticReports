@@ -92,3 +92,30 @@ def get_nearest_eod(dt: pd.Timestamp, eod_times: pd.DatetimeIndex, direction: in
         if len(valid) == 0:
             return eod_times[0]
         return valid[-1]
+
+
+def get_nearest_eod_vectorized(dts: pd.DatetimeIndex, eod_times: pd.DatetimeIndex,
+                                direction: int = 1) -> pd.DatetimeIndex:
+    """Vectorized version of get_nearest_eod for an array of datetimes.
+
+    Uses searchsorted for O(n log m) instead of O(n*m).
+    direction=1: next EOD (or exact match), direction=-1: previous EOD.
+    """
+    eod_sorted = eod_times.sort_values()
+    eod_vals = eod_sorted.values
+    dt_vals = dts.values
+
+    if direction == 1:
+        idx = np.searchsorted(eod_vals, dt_vals, side="left")
+        idx = np.clip(idx, 0, len(eod_vals) - 1)
+        result = eod_vals[idx]
+    else:
+        idx = np.searchsorted(eod_vals, dt_vals, side="left") - 1
+        idx = np.clip(idx, 0, len(eod_vals) - 1)
+        result = eod_vals[idx]
+
+    result_idx = pd.DatetimeIndex(result)
+    if eod_sorted.tz is not None:
+        # numpy .values strips tz and stores as UTC nanos, so localize as UTC first
+        result_idx = result_idx.tz_localize("UTC").tz_convert(eod_sorted.tz)
+    return result_idx

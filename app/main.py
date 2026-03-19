@@ -41,7 +41,8 @@ def _check_auth(req, sess):
 
 bware = Beforeware(_check_auth, skip=list(LOGIN_SKIP))
 
-custom_css = Link(rel="stylesheet", href="/style.css")
+_css_version = "3"
+custom_css = Link(rel="stylesheet", href=f"/style.css?v={_css_version}")
 app, rt = fast_app(
     hdrs=[custom_css],
     static_path=os.path.join(os.path.dirname(__file__), "static"),
@@ -56,9 +57,9 @@ def page_shell(*content, active_tab="backtest"):
     """Main page layout with tab navigation."""
     return Title("ApticReports"), Main(
         Div(
-            H1("ApticReports", style="margin:0;"),
+            H1("ApticReports"),
             A("Logout", href="/logout", cls="logout-btn"),
-            style="display:flex; justify-content:space-between; align-items:center;",
+            cls="app-header",
         ),
         Nav(
             A("Backtest", hx_get="/tab/backtest", hx_target="#tab-content",
@@ -86,9 +87,9 @@ def metrics_display(stats: dict):
     return Div(*items, cls="metrics-grid")
 
 
-def chart_img(b64: str, alt: str = "Chart"):
+def chart_img(b64: str, alt: str = "Chart", cls: str = "chart-container"):
     """Render an inline base64 chart image."""
-    return Div(Img(src=f"data:image/png;base64,{b64}", alt=alt), cls="chart-container")
+    return Div(Img(src=f"data:image/png;base64,{b64}", alt=alt), cls=cls)
 
 
 def download_links(files: dict):
@@ -291,53 +292,46 @@ async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
             rolling_vol_chart_formal, returns_histogram_formal,
             timezone_chart_formal, timezone_cumulative_returns_formal,
         )
-        perf_chart = performance_summary_formal(daily_returns,
-                                                title=f"{strategy} {result['ccy_pair']}")
+        from app.reporting.pdf_report import generate_backtest_pdf
+
+        title = f"{strategy} {result['ccy_pair']}"
+        pnl_raw = result["pnl_raw"]
+
+        perf_chart = performance_summary_formal(daily_returns, title=title)
         monthly_chart = monthly_returns_bar_formal(daily_returns)
         vol_chart = rolling_vol_chart_formal(daily_returns)
 
-        # Additional charts (histogram, timezone)
-        try:
-            hist_chart = returns_histogram_formal(result["pnl_raw"], aum)
-        except Exception:
-            hist_chart = None
-
-        try:
-            tz_chart = timezone_chart_formal(result["pnl_raw"], aum=aum)
-        except Exception:
-            tz_chart = None
-
-        try:
-            tz_cum_chart = timezone_cumulative_returns_formal(
-                result["pnl_raw"], daily_returns, aum=aum)
-        except Exception:
-            tz_cum_chart = None
+        hist_chart = tz_chart = tz_cum_chart = None
+        try: hist_chart = returns_histogram_formal(pnl_raw, aum)
+        except Exception: pass
+        try: tz_chart = timezone_chart_formal(pnl_raw, aum=aum)
+        except Exception: pass
+        try: tz_cum_chart = timezone_cumulative_returns_formal(pnl_raw, daily_returns, aum=aum)
+        except Exception: pass
 
         # Generate PDF
-        from app.reporting.pdf_report import generate_backtest_pdf
         pdf_path = generate_backtest_pdf(
-            daily_returns=daily_returns,
-            pnl_raw=result["pnl_raw"],
-            aum=aum,
-            strategy=strategy,
-            ccy_pair=result["ccy_pair"],
-            timeframe=timeframe,
-            strat_dir=result["strat_dir"],
-            filestem=result["filestem"],
-            output_path=OUTPUT_DIR,
-        )
+            daily_returns=daily_returns, pnl_raw=pnl_raw, aum=aum,
+            strategy=strategy, ccy_pair=result["ccy_pair"],
+            timeframe=timeframe, strat_dir=result["strat_dir"],
+            filestem=result["filestem"], output_path=OUTPUT_DIR)
         result["files"]["pdf"] = pdf_path
 
-        # Build results UI with all charts
-        chart_elements = [
-            chart_img(perf_chart, "Performance Summary"),
-            chart_img(monthly_chart, "Monthly Returns"),
-            chart_img(vol_chart, "Rolling Volatility"),
-        ]
+        # Build results UI — charts with proper sizing
+        small_row = []
         if hist_chart:
-            chart_elements.append(chart_img(hist_chart, "Returns Histogram"))
+            small_row.append(chart_img(hist_chart, "Returns Histogram", cls="chart-half"))
+        if vol_chart:
+            small_row.append(chart_img(vol_chart, "Rolling Volatility", cls="chart-half"))
         if tz_chart:
-            chart_elements.append(chart_img(tz_chart, "Timezone Analysis"))
+            small_row.append(chart_img(tz_chart, "Timezone Analysis", cls="chart-half"))
+
+        chart_elements = [
+            chart_img(perf_chart, "Performance Summary", cls="chart-wide"),
+            chart_img(monthly_chart, "Monthly Returns", cls="chart-wide"),
+        ]
+        if small_row:
+            chart_elements.append(Div(*small_row, cls="chart-row"))
         if tz_cum_chart:
             chart_elements.append(chart_img(tz_cum_chart, "Timezone Cumulative Returns"))
 
@@ -473,30 +467,31 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
             performance_summary_formal, portfolio_strategies_formal,
             correlation_heatmap_formal, rolling_vol_chart_formal,
         )
-        perf_chart = performance_summary_formal(result["portfolio"], title=report_name)
-        strat_chart = portfolio_strategies_formal(
-            result["portfolio"], result["strategy_returns"], rel_returns
-        )
-        vol_chart = rolling_vol_chart_formal(result["portfolio"])
+        from app.reporting.pdf_report import generate_portfolio_pdf
+
+        portfolio = result["portfolio"]
+        strategy_returns = result["strategy_returns"]
+
+        perf_chart = performance_summary_formal(portfolio, title=report_name)
+        strat_chart = portfolio_strategies_formal(portfolio, strategy_returns, rel_returns)
+        vol_chart = rolling_vol_chart_formal(portfolio)
+        corr_chart = None
+        if strategy_returns.shape[1] >= 2:
+            corr_chart = correlation_heatmap_formal(strategy_returns)
 
         # Generate PDF
-        from app.reporting.pdf_report import generate_portfolio_pdf
         pdf_path = generate_portfolio_pdf(
-            ptf_daily=result["ptf_daily"],
-            portfolio=result["portfolio"],
-            strategy_returns=result["strategy_returns"],
-            metadata=result["metadata"],
-            report_name=report_name,
-            rel_returns=rel_returns,
-            output_path=OUTPUT_DIR,
-        )
+            ptf_daily=result["ptf_daily"], portfolio=portfolio,
+            strategy_returns=strategy_returns, metadata=result["metadata"],
+            report_name=report_name, rel_returns=rel_returns, output_path=OUTPUT_DIR)
         result["files"]["pdf"] = pdf_path
 
-        # Correlation heatmap (if multiple strategies)
-        corr_html = ""
-        if result["strategy_returns"].shape[1] >= 2:
-            corr_chart = correlation_heatmap_formal(result["strategy_returns"])
-            corr_html = chart_img(corr_chart, "Strategy Correlations")
+        # Bottom row: correlation + rolling vol side-by-side
+        bottom_row = []
+        if corr_chart:
+            bottom_row.append(chart_img(corr_chart, "Strategy Correlations", cls="chart-half"))
+        bottom_row.append(chart_img(vol_chart, "Rolling Volatility",
+                                    cls="chart-half" if corr_chart else "chart-wide"))
 
         # Strategy metadata table
         meta_rows = []
@@ -512,17 +507,16 @@ async def post(pnlfiles: list[UploadFile], report_name: str, aum: float,
                     Thead(Tr(Th("Pair"), Th("Strategy"), Th("Timeframe"), Th("Direction"))),
                     Tbody(*meta_rows),
                 ),
-                style="margin:1rem 0; font-size:0.9rem;",
+                style="margin:0.8rem 0; font-size:0.85rem;",
             )
 
         return Div(
             H3(f"Portfolio: {report_name}"),
             meta_table,
             metrics_display(stats),
-            chart_img(perf_chart, "Performance Summary"),
+            chart_img(perf_chart, "Performance Summary", cls="chart-wide"),
             chart_img(strat_chart, "Portfolio vs Strategies"),
-            corr_html,
-            chart_img(vol_chart, "Rolling Volatility"),
+            Div(*bottom_row, cls="chart-row") if corr_chart else bottom_row[0],
             download_links({
                 "Daily PnL CSV": result["files"]["daily"],
                 "Monthly PnL CSV": result["files"]["monthly"],
