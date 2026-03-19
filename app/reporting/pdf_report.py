@@ -131,9 +131,9 @@ def generate_backtest_pdf(
     # R positions (from page top): perf at 46mm, stats at 55mm, monthly at 138mm, bottom at 170mm
     header_h = 14 * mm
 
-    # Left column = 42% of usable, right column = 56% (perf chart needs more room)
-    left_w = usable_w * 0.42
-    right_w = usable_w * 0.56
+    # Left column = 50% of usable, right column = 48%
+    left_w = usable_w * 0.50
+    right_w = usable_w * 0.48
     col_gap = usable_w * 0.02
 
     # --- Styles ---
@@ -210,7 +210,7 @@ def generate_backtest_pdf(
 
     # Monthly bar (left column, wide and short)
     monthly_pdf_w = left_w - 2 * mm
-    monthly_pdf_h = 33 * mm
+    monthly_pdf_h = 25 * mm
     monthly_fig = (monthly_pdf_w / 72 * _scale, monthly_pdf_h / 72 * _scale)
     monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=monthly_fig,
                                                       fontscale=_scale)
@@ -309,7 +309,7 @@ def generate_backtest_pdf(
     # Drawdown heading and table
     if not dd_df.empty:
         left_story.append(Paragraph("<b>Drawdown Length and Recovery Times</b>", section_style))
-        dd_col_widths = [15 * mm, 15 * mm, 15 * mm, 20 * mm, 13 * mm]
+        dd_col_widths = [18 * mm, 18 * mm, 18 * mm, 24 * mm, 14 * mm]
         dd_tbl = _build_drawdown_table(dd_df, col_widths=dd_col_widths)
         if dd_tbl:
             left_story.append(dd_tbl)
@@ -317,7 +317,7 @@ def generate_backtest_pdf(
 
     # Monthly returns bar chart
     left_story.append(Paragraph("<b>Monthly Returns (% AUM)</b>", section_style))
-    monthly_img = _chart_image(monthly_b64, width=monthly_pdf_w, height=monthly_pdf_h)
+    monthly_img = _chart_image(monthly_b64, width=monthly_pdf_w)
     left_story.append(monthly_img)
 
     # ---- Position frames (layout computed during chart generation above) ----

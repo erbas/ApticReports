@@ -48,11 +48,11 @@ def _apply_formal_style(ax, fontsize=11, fontscale=1.0):
         pass
 
 
-def _format_date_axis(ax, fontsize=11, fontscale=1.0):
-    """Apply consistent date formatting to x-axis (R uses 'Jan 23 2020' style)."""
+def _format_date_axis(ax, fontsize=11, fontscale=1.0, year_interval=1):
+    """Apply consistent date formatting to x-axis."""
     fs = fontsize * fontscale
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_locator(mdates.YearLocator(year_interval))
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha="center", fontsize=fs)
 
 
@@ -126,16 +126,18 @@ def monthly_returns_bar_formal(daily_returns: pd.Series,
                                 figsize=(10, 3), fontscale: float = 1.0) -> str:
     """Monthly returns bar chart. Returns base64 PNG."""
     s = fontscale
+    effective_w = figsize[0] / s
+    yi = 1 if effective_w > 3 else 2
     monthly = daily_returns.resample("ME").sum() * 100
     fig, ax = plt.subplots(figsize=figsize)
     fig.patch.set_facecolor("white")
     clrs = [_DARK_GRAY if v >= 0 else _LIGHT_GRAY for v in monthly.values]
     ax.bar(monthly.index, monthly.values, width=25, color=clrs, linewidth=0)
-    ax.set_ylabel("Monthly Return (% AUM)", fontsize=11 * s, color=_DARK_GRAY)
+    ax.set_ylabel("Monthly (%)", fontsize=11 * s, color=_DARK_GRAY)
     ax.axhline(0, color=_LIGHT_GRAY, linewidth=0.3 * s)
     _apply_formal_style(ax, fontsize=10, fontscale=s)
-    _format_date_axis(ax, fontsize=10, fontscale=s)
-    fig.tight_layout(pad=0.5)
+    _format_date_axis(ax, fontsize=10, fontscale=s, year_interval=yi)
+    fig.tight_layout(pad=0.8)
     return _fig_to_base64(fig)
 
 
@@ -195,13 +197,15 @@ def rolling_vol_chart_formal(daily_returns: pd.Series,
                 fontsize=12 * s, color=_DARK_GRAY)
         return _fig_to_base64(fig)
 
+    effective_w = figsize[0] / s
+    yi = 1 if effective_w > 3 else 2
     ax.plot(vol.index, vol.values * 100, color=_DARK_GRAY, linewidth=1.0 * s)
     ax.fill_between(vol.index, 0, vol.values * 100, alpha=0.12, color=_LIGHT_GRAY)
     ax.set_ylabel("Volatility (%)", fontsize=12 * s, color=_DARK_GRAY)
     ax.set_title(f"Volatility (rolling {months} month)", fontsize=13 * s,
                  fontweight="bold", color="black", fontfamily="serif")
     _apply_formal_style(ax, fontsize=11, fontscale=s)
-    _format_date_axis(ax, fontsize=11, fontscale=s)
+    _format_date_axis(ax, fontsize=11, fontscale=s, year_interval=yi)
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 
@@ -247,12 +251,19 @@ def timezone_chart_formal(pnl_raw: pd.Series, aum: float = 1.0,
         tz_rtns.append(df.loc[mask, "pnl"].sum() * 100)
 
     x = np.arange(len(zone_order))
-    labels = [f"{z}\n{r:.1f}%" for z, r in zip(zone_order, tz_rtns)]
+    effective_w = figsize[0] / s
+    if effective_w > 3:
+        labels = [f"{z}\n{r:.1f}%" for z, r in zip(zone_order, tz_rtns)]
+        tick_fs = 12 * s
+    else:
+        short = {"London": "Ldn", "New York": "NY", "Asia": "Asia"}
+        labels = [f"{short[z]}\n{r:.0f}%" for z, r in zip(zone_order, tz_rtns)]
+        tick_fs = 9 * s
     ax.bar(x, pct_trades, color=_DARK_GRAY)
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, fontsize=12 * s)
+    ax.set_xticklabels(labels, fontsize=tick_fs)
     ax.set_ylabel("% Trades", fontsize=12 * s, color=_DARK_GRAY)
-    ax.set_title("Trades and Returns by Timezone", fontsize=13 * s, fontweight="bold",
+    ax.set_title("Trades & Returns by TZ", fontsize=13 * s, fontweight="bold",
                  color="black", fontfamily="serif")
     _apply_formal_style(ax, fontsize=11, fontscale=s)
     fig.tight_layout(pad=0.5)
@@ -287,9 +298,9 @@ def timezone_cumulative_returns_formal(pnl_raw: pd.Series, daily_returns: pd.Ser
     asia_mask = ~london_mask & ~ny_mask
 
     zones = [
-        ("Returns from London Trades", london_mask),
-        ("Returns from New York Trades", ny_mask),
-        ("Returns from Asia Trades", asia_mask),
+        ("London Trades", london_mask),
+        ("New York Trades", ny_mask),
+        ("Asia Trades", asia_mask),
     ]
 
     for ax, (label, mask) in zip(axes, zones):
@@ -300,10 +311,13 @@ def timezone_cumulative_returns_formal(pnl_raw: pd.Series, daily_returns: pd.Ser
             cum = zone_daily.cumsum() * 100
             ax.plot(cum.index, cum.values, color=_DARK_GRAY, linewidth=0.9 * s)
             ax.fill_between(cum.index, 0, cum.values, alpha=0.12, color=_LIGHT_GRAY)
-        ax.set_title(label, fontsize=12 * s, fontweight="bold", color="black", fontfamily="serif")
-        ax.set_ylabel("% AUM", fontsize=11 * s, color=_DARK_GRAY)
-        _apply_formal_style(ax, fontsize=10, fontscale=s)
-        _format_date_axis(ax, fontsize=10, fontscale=s)
+        ax.set_title(label, fontsize=10 * s, fontweight="bold", color="black", fontfamily="serif")
+        ax.set_ylabel("% AUM", fontsize=9 * s, color=_DARK_GRAY)
+        _apply_formal_style(ax, fontsize=8, fontscale=s)
+        # Use sparser date ticks for narrow panels
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+        ax.xaxis.set_major_locator(mdates.YearLocator(2))
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha="right", fontsize=8 * s)
 
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
