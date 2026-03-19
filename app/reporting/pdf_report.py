@@ -82,8 +82,8 @@ def _build_drawdown_table(dd_df: pd.DataFrame, col_widths=None) -> Table | None:
     t = Table(data, colWidths=col_widths)
     style_cmds = [
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 7),
-        ("FONTSIZE", (0, 1), (-1, -1), 6.5),
+        ("FONTSIZE", (0, 0), (-1, 0), 6.5),
+        ("FONTSIZE", (0, 1), (-1, -1), 6),
         ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("ALIGN", (3, 0), (4, -1), "RIGHT"),
         ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
@@ -92,10 +92,10 @@ def _build_drawdown_table(dd_df: pd.DataFrame, col_widths=None) -> Table | None:
         ("LINEBELOW", (0, -1), (-1, -1), 0.6, colors.black),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 3),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-        ("TOPPADDING", (0, 0), (-1, -1), 2),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+        ("LEFTPADDING", (0, 0), (-1, -1), 2),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+        ("TOPPADDING", (0, 0), (-1, -1), 1),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
     ]
     t.setStyle(TableStyle(style_cmds))
     return t
@@ -139,9 +139,9 @@ def generate_backtest_pdf(
     # --- Styles ---
     styles = getSampleStyleSheet()
     section_style = ParagraphStyle(
-        "BTSection", parent=styles["Normal"], fontSize=9,
+        "BTSection", parent=styles["Normal"], fontSize=8,
         textColor=colors.black, fontName="Helvetica-Bold",
-        leading=11, spaceBefore=2 * mm, spaceAfter=1.5 * mm,
+        leading=9, spaceBefore=1 * mm, spaceAfter=1 * mm,
     )
 
     # --- Compute data ---
@@ -182,21 +182,57 @@ def generate_backtest_pdf(
             renamed_stats[display_k] = stats[k]
 
     # --- Generate charts ---
-    # Generate at large default figsizes for legible text, then let reportlab
-    # scale the images down to fit the PDF frames (shrinking preserves quality).
-    perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance")
-    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns)
+    # KEY: generate each chart at the SAME aspect ratio as its PDF frame,
+    # but scaled up ~2× for legible text.  ReportLab then scales down to fit.
+    # Layout dimensions (mm) — computed above:
+    row1_top_from_top = 168 * mm
+    row1_h = 45 * mm
+    row2_top_from_top = 218 * mm
+    row2_h = 40 * mm
 
+    row1_top_y = page_h - row1_top_from_top
+    row1_y = row1_top_y - row1_h
+    row2_top_y = page_h - row2_top_from_top
+    row2_y = row2_top_y - row2_h
+
+    mid_frame_top = (page_h - margin_t - 13 * mm) - 1 * mm
+    mid_frame_bottom = row1_top_y + 2 * mm
+    mid_frame_h = mid_frame_top - mid_frame_bottom
+
+    # Performance chart (right column): ~91mm × use 1.3:1 height:width ratio
+    perf_pdf_w = right_w - 2 * mm  # ~89mm
+    perf_pdf_h = perf_pdf_w * 1.3  # ~116mm — doesn't fill full mid_frame_h
+    _scale = 2.0  # render at 2× PDF size for readable text
+    perf_fig = (perf_pdf_w / 25.4 * _scale, perf_pdf_h / 25.4 * _scale)
+    perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance",
+                                                   figsize=perf_fig)
+
+    # Monthly bar (left column, wide and short)
+    monthly_pdf_w = left_w - 2 * mm  # ~93mm
+    monthly_pdf_h = 25 * mm
+    monthly_fig = (monthly_pdf_w / 25.4 * _scale, monthly_pdf_h / 25.4 * _scale)
+    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=monthly_fig)
+
+    # Bottom row 1: three charts, each ~60mm × 43mm
     bot_chart_w = (usable_w - 4 * mm) / 3
+    bot_pdf_w = bot_chart_w - 1 * mm  # ~59mm
+    bot_pdf_h = row1_h - 2 * mm      # ~43mm
+    bot_fig = (bot_pdf_w / 25.4 * _scale, bot_pdf_h / 25.4 * _scale)
 
     try:
-        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum)
+        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=bot_fig)
     except Exception:
         hist_b64 = None
 
-    vol_b64 = charts.rolling_vol_chart_formal(daily_returns)
-    tz_b64 = charts.timezone_chart_formal(pnl_raw)
-    tz_cum_b64 = charts.timezone_cumulative_returns_formal(pnl_raw, daily_returns)
+    vol_b64 = charts.rolling_vol_chart_formal(daily_returns, figsize=bot_fig)
+    tz_b64 = charts.timezone_chart_formal(pnl_raw, figsize=bot_fig)
+
+    # Bottom row 2: timezone cumulative, full width ~190mm × 38mm
+    tz_cum_pdf_w = usable_w
+    tz_cum_pdf_h = row2_h - 2 * mm
+    tz_cum_fig = (tz_cum_pdf_w / 25.4 * _scale, tz_cum_pdf_h / 25.4 * _scale)
+    tz_cum_b64 = charts.timezone_cumulative_returns_formal(
+        pnl_raw, daily_returns, figsize=tz_cum_fig)
 
     # --- Build the PDF using canvas + frames for precise positioning ---
     from reportlab.pdfgen import canvas as canvasmod
@@ -246,8 +282,8 @@ def generate_backtest_pdf(
     summary_tbl = Table(summary_data, colWidths=[col_w1, col_w2])
     summary_tbl.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 7),
-        ("FONTSIZE", (0, 1), (-1, -1), 6.5),
+        ("FONTSIZE", (0, 0), (-1, 0), 6.5),
+        ("FONTSIZE", (0, 1), (-1, -1), 6),
         ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
         ("ALIGN", (1, 0), (1, -1), "RIGHT"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
@@ -257,13 +293,13 @@ def generate_backtest_pdf(
         ("LINEBELOW", (0, -1), (-1, -1), 0.6, colors.black),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.Color(0.95, 0.95, 0.95)]),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 3),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-        ("TOPPADDING", (0, 0), (-1, -1), 2),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+        ("LEFTPADDING", (0, 0), (-1, -1), 2),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+        ("TOPPADDING", (0, 0), (-1, -1), 1),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
     ]))
     left_story.append(summary_tbl)
-    left_story.append(Spacer(1, 3 * mm))
+    left_story.append(Spacer(1, 1.5 * mm))
 
     # Drawdown heading and table
     if not dd_df.empty:
@@ -272,31 +308,14 @@ def generate_backtest_pdf(
         dd_tbl = _build_drawdown_table(dd_df, col_widths=dd_col_widths)
         if dd_tbl:
             left_story.append(dd_tbl)
-        left_story.append(Spacer(1, 3 * mm))
+        left_story.append(Spacer(1, 1.5 * mm))
 
     # Monthly returns bar chart
     left_story.append(Paragraph("<b>Monthly Returns (% AUM)</b>", section_style))
-    monthly_img = _chart_image(monthly_b64, width=left_w - 2 * mm)
+    monthly_img = _chart_image(monthly_b64, width=monthly_pdf_w, height=monthly_pdf_h)
     left_story.append(monthly_img)
 
-    # ---- Position frames ----
-    # R template positions (from page top):
-    #   Bottom row 1 (hist/vol/tz) at y=170mm, ~45mm tall
-    #   Bottom row 2 (tz cumulative) at y=220mm, ~45mm tall
-    row1_top_from_top = 168 * mm
-    row1_h = 45 * mm
-    row2_top_from_top = 218 * mm
-    row2_h = 40 * mm
-
-    row1_top_y = page_h - row1_top_from_top  # reportlab y
-    row1_y = row1_top_y - row1_h
-    row2_top_y = page_h - row2_top_from_top
-    row2_y = row2_top_y - row2_h
-
-    mid_frame_top = y_hrule - 1 * mm
-    mid_frame_bottom = row1_top_y + 2 * mm
-    mid_frame_h = mid_frame_top - mid_frame_bottom
-
+    # ---- Position frames (layout computed during chart generation above) ----
     # Draw left column
     left_frame = RLFrame(left_x, mid_frame_bottom, left_w, mid_frame_h,
                          leftPadding=0, rightPadding=0,
@@ -306,7 +325,7 @@ def generate_backtest_pdf(
     # ---- RIGHT COLUMN (Performance chart) ----
     right_x = left_x + left_w + col_gap
     right_story = []
-    perf_img = _chart_image(perf_b64, width=right_w - 2 * mm, height=mid_frame_h - 1 * mm)
+    perf_img = _chart_image(perf_b64, width=perf_pdf_w, height=perf_pdf_h)
     right_story.append(perf_img)
 
     right_frame = RLFrame(right_x, mid_frame_bottom, right_w, mid_frame_h,
@@ -327,7 +346,7 @@ def generate_backtest_pdf(
 
     for i, b64 in enumerate(bottom_charts):
         chart_x = x_start + i * (chart_w + 2 * mm)
-        img = _chart_image(b64, width=chart_w - 1 * mm, height=row1_h - 2 * mm)
+        img = _chart_image(b64, width=bot_pdf_w, height=bot_pdf_h)
         frame_story = [img]
         bottom_frame = RLFrame(chart_x, row1_y, chart_w, row1_h,
                                leftPadding=0, rightPadding=0,
@@ -335,7 +354,7 @@ def generate_backtest_pdf(
         bottom_frame.addFromList(frame_story, c)
 
     # ---- BOTTOM ROW 2 (timezone cumulative returns: London, NY, Asia) ----
-    tz_cum_img = _chart_image(tz_cum_b64, width=usable_w, height=row2_h - 2 * mm)
+    tz_cum_img = _chart_image(tz_cum_b64, width=tz_cum_pdf_w, height=tz_cum_pdf_h)
     row2_frame = RLFrame(x_start, row2_y, usable_w, row2_h,
                          leftPadding=0, rightPadding=0,
                          topPadding=0, bottomPadding=0)
