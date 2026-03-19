@@ -58,8 +58,8 @@ def _format_date_axis(ax, fontsize=22):
 def _fig_to_base64(fig: plt.Figure) -> str:
     """Convert matplotlib figure to base64 PNG string."""
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=200,
-                facecolor="white", edgecolor="none")
+    fig.savefig(buf, format="png", dpi=200, bbox_inches="tight",
+                pad_inches=0.05, facecolor="white", edgecolor="none")
     plt.close(fig)
     buf.seek(0)
     return base64.b64encode(buf.read()).decode("utf-8")
@@ -68,8 +68,8 @@ def _fig_to_base64(fig: plt.Figure) -> str:
 def _fig_to_bytes(fig: plt.Figure) -> bytes:
     """Convert matplotlib figure to PNG bytes (for PDF embedding)."""
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=200,
-                facecolor="white", edgecolor="none")
+    fig.savefig(buf, format="png", dpi=200, bbox_inches="tight",
+                pad_inches=0.05, facecolor="white", edgecolor="none")
     plt.close(fig)
     buf.seek(0)
     return buf.read()
