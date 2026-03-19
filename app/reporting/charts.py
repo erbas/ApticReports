@@ -25,20 +25,20 @@ _FILL_RED = "#E84855"
 _MUTED_BG = "#F0F4F8"
 
 
-def _apply_formal_style(ax, fontsize=22):
-    """Apply formal styling to an axes.  Font sizes must be large because
-    charts are rendered at 2× PDF size then scaled down by reportlab."""
+def _apply_formal_style(ax, fontsize=11, fontscale=1.0):
+    """Apply formal styling to an axes."""
+    fs = fontsize * fontscale
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["left"].set_color(_LIGHT_GRAY)
     ax.spines["bottom"].set_color(_LIGHT_GRAY)
-    ax.spines["left"].set_linewidth(1.0)
-    ax.spines["bottom"].set_linewidth(1.0)
-    ax.tick_params(axis="both", which="both", labelsize=fontsize, colors=_DARK_GRAY,
-                   length=5, width=1.0)
-    ax.yaxis.label.set_size(fontsize)
-    ax.xaxis.label.set_size(fontsize)
-    ax.grid(True, axis="y", linewidth=0.6, color="#dddddd", alpha=0.7)
+    ax.spines["left"].set_linewidth(0.5 * fontscale)
+    ax.spines["bottom"].set_linewidth(0.5 * fontscale)
+    ax.tick_params(axis="both", which="both", labelsize=fs, colors=_DARK_GRAY,
+                   length=3 * fontscale, width=0.5 * fontscale)
+    ax.yaxis.label.set_size(fs)
+    ax.xaxis.label.set_size(fs)
+    ax.grid(True, axis="y", linewidth=0.3 * fontscale, color="#dddddd", alpha=0.7)
     ax.set_facecolor("white")
     # Disable scientific notation on y-axis (no "1e9" etc)
     ax.yaxis.get_major_formatter().set_useOffset(False)
@@ -48,11 +48,12 @@ def _apply_formal_style(ax, fontsize=22):
         pass
 
 
-def _format_date_axis(ax, fontsize=22):
+def _format_date_axis(ax, fontsize=11, fontscale=1.0):
     """Apply consistent date formatting to x-axis (R uses 'Jan 23 2020' style)."""
+    fs = fontsize * fontscale
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.xaxis.set_major_locator(mdates.YearLocator())
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha="center", fontsize=fontsize)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha="center", fontsize=fs)
 
 
 def _fig_to_base64(fig: plt.Figure) -> str:
@@ -80,9 +81,10 @@ def _fig_to_bytes(fig: plt.Figure) -> bytes:
 # ---------------------------------------------------------------------------
 
 def performance_summary_formal(daily_returns: pd.Series, title: str = "",
-                                figsize=(7.5, 4.2)) -> str:
+                                figsize=(10, 5.6), fontscale: float = 1.0) -> str:
     """Three-panel chart: cumulative returns, daily returns, drawdowns.
     Uses web app color palette. Returns base64 PNG."""
+    s = fontscale
     fig, axes = plt.subplots(3, 1, figsize=figsize, sharex=True,
                              gridspec_kw={"height_ratios": [3, 1, 1.5]})
     fig.patch.set_facecolor("white")
@@ -91,65 +93,67 @@ def performance_summary_formal(daily_returns: pd.Series, title: str = "",
     cum = daily_returns.cumsum() * 100
 
     # Cumulative returns
-    axes[0].plot(dates, cum, color=_DARK_GRAY, linewidth=1.8)
+    axes[0].plot(dates, cum, color=_DARK_GRAY, linewidth=0.9 * s)
     axes[0].fill_between(dates, 0, cum, alpha=0.15, color=_LIGHT_GRAY)
-    axes[0].set_ylabel("Cumulative Return (% AUM)", fontsize=22, color=_DARK_GRAY)
-    axes[0].axhline(0, color=_LIGHT_GRAY, linewidth=0.6)
+    axes[0].set_ylabel("Cumulative Return (% AUM)", fontsize=11 * s, color=_DARK_GRAY)
+    axes[0].axhline(0, color=_LIGHT_GRAY, linewidth=0.3 * s)
     if title:
-        axes[0].set_title(title, fontsize=24, fontweight="bold", color="black",
+        axes[0].set_title(title, fontsize=12 * s, fontweight="bold", color="black",
                           fontfamily="serif")
-    _apply_formal_style(axes[0], fontsize=20)
+    _apply_formal_style(axes[0], fontsize=10, fontscale=s)
 
     # Daily returns bar
     clrs = [_DARK_GRAY if v >= 0 else _LIGHT_GRAY for v in daily_returns.values]
     axes[1].bar(dates, daily_returns.values * 100, color=clrs, width=1.5, linewidth=0)
-    axes[1].set_ylabel("Daily (%)", fontsize=22, color=_DARK_GRAY)
-    axes[1].axhline(0, color=_LIGHT_GRAY, linewidth=0.6)
-    _apply_formal_style(axes[1], fontsize=20)
+    axes[1].set_ylabel("Daily (%)", fontsize=11 * s, color=_DARK_GRAY)
+    axes[1].axhline(0, color=_LIGHT_GRAY, linewidth=0.3 * s)
+    _apply_formal_style(axes[1], fontsize=10, fontscale=s)
 
     # Drawdowns
     dd = drawdown_series(daily_returns, geometric=False)
     axes[2].fill_between(dates, 0, dd.values * 100, color=_LIGHT_GRAY, alpha=0.5)
-    axes[2].plot(dates, dd.values * 100, color=_DARK_GRAY, linewidth=1.2)
-    axes[2].set_ylabel("Drawdown (%)", fontsize=22, color=_DARK_GRAY)
-    _apply_formal_style(axes[2], fontsize=20)
+    axes[2].plot(dates, dd.values * 100, color=_DARK_GRAY, linewidth=0.6 * s)
+    axes[2].set_ylabel("Drawdown (%)", fontsize=11 * s, color=_DARK_GRAY)
+    _apply_formal_style(axes[2], fontsize=10, fontscale=s)
 
-    _format_date_axis(axes[2], fontsize=20)
+    _format_date_axis(axes[2], fontsize=10, fontscale=s)
     fig.tight_layout(pad=0.5)
     fig.subplots_adjust(hspace=0.12)
     return _fig_to_base64(fig)
 
 
 def monthly_returns_bar_formal(daily_returns: pd.Series,
-                                figsize=(8, 2.5)) -> str:
+                                figsize=(10, 3), fontscale: float = 1.0) -> str:
     """Monthly returns bar chart. Returns base64 PNG."""
+    s = fontscale
     monthly = daily_returns.resample("ME").sum() * 100
     fig, ax = plt.subplots(figsize=figsize)
     fig.patch.set_facecolor("white")
     clrs = [_DARK_GRAY if v >= 0 else _LIGHT_GRAY for v in monthly.values]
     ax.bar(monthly.index, monthly.values, width=25, color=clrs, linewidth=0)
-    ax.set_ylabel("Monthly Return (% AUM)", fontsize=22, color=_DARK_GRAY)
-    ax.axhline(0, color=_LIGHT_GRAY, linewidth=0.6)
-    _apply_formal_style(ax, fontsize=20)
-    _format_date_axis(ax, fontsize=20)
+    ax.set_ylabel("Monthly Return (% AUM)", fontsize=11 * s, color=_DARK_GRAY)
+    ax.axhline(0, color=_LIGHT_GRAY, linewidth=0.3 * s)
+    _apply_formal_style(ax, fontsize=10, fontscale=s)
+    _format_date_axis(ax, fontsize=10, fontscale=s)
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 
 
 def returns_histogram_formal(pnl_raw: pd.Series, aum: float = 1.0,
-                              figsize=(6, 4)) -> str:
+                              figsize=(10, 6), fontscale: float = 1.0) -> str:
     """Histogram of trade returns with fitted normal curve. Returns base64 PNG."""
+    s = fontscale
     data = (pnl_raw / aum * 100).dropna()
     fig, ax = plt.subplots(figsize=figsize)
     fig.patch.set_facecolor("white")
 
     if len(data) == 0:
         ax.text(0.5, 0.5, "No data", ha="center", va="center",
-                fontsize=24, color=_DARK_GRAY)
+                fontsize=12 * s, color=_DARK_GRAY)
         return _fig_to_base64(fig)
 
     n, bins, patches = ax.hist(data, bins=25, density=False, color="darkgrey",
-                               alpha=0.85, edgecolor="white", linewidth=0.5)
+                               alpha=0.85, edgecolor="white", linewidth=0.3 * s)
     total = len(data)
     for p in patches:
         p.set_height(p.get_height() / total * 100)
@@ -162,22 +166,23 @@ def returns_histogram_formal(pnl_raw: pd.Series, aum: float = 1.0,
         mu, sigma = data.mean(), data.std()
         y = norm.pdf(x, mu, sigma)
         y_scaled = y * (bins[1] - bins[0]) * 100
-        ax.plot(x, y_scaled, color=_BRAND_BLUE, linewidth=3)
+        ax.plot(x, y_scaled, color=_BRAND_BLUE, linewidth=2 * s)
     except ImportError:
         pass
 
-    ax.set_xlabel("Returns (% AUM)", fontsize=24, color=_DARK_GRAY)
-    ax.set_ylabel("% Trades", fontsize=24, color=_DARK_GRAY)
-    ax.set_title("Histogram of Trade Returns", fontsize=26, fontweight="bold",
+    ax.set_xlabel("Returns (% AUM)", fontsize=12 * s, color=_DARK_GRAY)
+    ax.set_ylabel("% Trades", fontsize=12 * s, color=_DARK_GRAY)
+    ax.set_title("Histogram of Trade Returns", fontsize=13 * s, fontweight="bold",
                  color="black", fontfamily="serif")
-    _apply_formal_style(ax, fontsize=22)
+    _apply_formal_style(ax, fontsize=11, fontscale=s)
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 
 
 def rolling_vol_chart_formal(daily_returns: pd.Series,
-                              figsize=(6, 4)) -> str:
+                              figsize=(10, 6), fontscale: float = 1.0) -> str:
     """Rolling volatility chart. Returns base64 PNG."""
+    s = fontscale
     window = 252 if len(daily_returns) > 500 else 63
     vol = rolling_volatility(daily_returns, window)
     months = round(12 * window / 252)
@@ -187,31 +192,36 @@ def rolling_vol_chart_formal(daily_returns: pd.Series,
 
     if vol.empty:
         ax.text(0.5, 0.5, "Insufficient data", ha="center", va="center",
-                fontsize=24, color=_DARK_GRAY)
+                fontsize=12 * s, color=_DARK_GRAY)
         return _fig_to_base64(fig)
 
-    ax.plot(vol.index, vol.values * 100, color=_DARK_GRAY, linewidth=2.0)
+    ax.plot(vol.index, vol.values * 100, color=_DARK_GRAY, linewidth=1.0 * s)
     ax.fill_between(vol.index, 0, vol.values * 100, alpha=0.12, color=_LIGHT_GRAY)
-    ax.set_ylabel("Volatility (%)", fontsize=24, color=_DARK_GRAY)
-    ax.set_title(f"Volatility (rolling {months} month)", fontsize=26,
+    ax.set_ylabel("Volatility (%)", fontsize=12 * s, color=_DARK_GRAY)
+    ax.set_title(f"Volatility (rolling {months} month)", fontsize=13 * s,
                  fontweight="bold", color="black", fontfamily="serif")
-    _apply_formal_style(ax, fontsize=22)
-    _format_date_axis(ax, fontsize=22)
+    _apply_formal_style(ax, fontsize=11, fontscale=s)
+    _format_date_axis(ax, fontsize=11, fontscale=s)
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 
 
-def timezone_chart_formal(pnl_raw: pd.Series, figsize=(6, 4)) -> str:
+def timezone_chart_formal(pnl_raw: pd.Series, aum: float = 1.0,
+                           figsize=(10, 6), fontscale: float = 1.0) -> str:
     """Trades and returns by timezone (London/NY/Asia). Returns base64 PNG."""
+    s = fontscale
     fig, ax = plt.subplots(figsize=figsize)
     fig.patch.set_facecolor("white")
 
     if len(pnl_raw) == 0 or pnl_raw.index.tz is None:
         ax.text(0.5, 0.5, "No timezone data", ha="center", va="center",
-                fontsize=24, color=_DARK_GRAY)
-        _apply_formal_style(ax, fontsize=22)
+                fontsize=12 * s, color=_DARK_GRAY)
+        _apply_formal_style(ax, fontsize=11, fontscale=s)
         fig.tight_layout(pad=0.5)
         return _fig_to_base64(fig)
+
+    # Normalize by AUM (matching R: pnl.xts <- pnl.raw/AUM)
+    pnl_norm = pnl_raw / aum
 
     # Classify entry times into sessions (matching R: T06-T18=London, T18-T22=NY, T22-T06=Asia)
     utc_hours = pnl_raw.index.tz_convert("UTC").hour
@@ -224,49 +234,51 @@ def timezone_chart_formal(pnl_raw: pd.Series, figsize=(6, 4)) -> str:
         else:
             zones.append("Asia")
 
-    df = pd.DataFrame({"zone": zones, "pnl": pnl_raw.values})
+    df = pd.DataFrame({"zone": zones, "pnl": pnl_norm.values})
     zone_order = ["London", "New York", "Asia"]
     total_trades = len(df)
-    total_pnl = df["pnl"].sum()
 
+    # Matching R: barplot of trade counts with return labels
     pct_trades = []
-    pct_returns = []
+    tz_rtns = []
     for z in zone_order:
         mask = df["zone"] == z
         pct_trades.append(mask.sum() / total_trades * 100 if total_trades > 0 else 0)
-        pct_returns.append(df.loc[mask, "pnl"].sum() / abs(total_pnl) * 100
-                          if total_pnl != 0 else 0)
+        tz_rtns.append(df.loc[mask, "pnl"].sum() * 100)
 
     x = np.arange(len(zone_order))
-    w = 0.35
-    ax.bar(x - w/2, pct_trades, w, color=_LIGHT_GRAY, label="% Trades")
-    ax.bar(x + w/2, pct_returns, w, color=_DARK_GRAY, label="% Returns")
+    labels = [f"{z}\n{r:.1f}%" for z, r in zip(zone_order, tz_rtns)]
+    ax.bar(x, pct_trades, color=_DARK_GRAY)
     ax.set_xticks(x)
-    ax.set_xticklabels(zone_order, fontsize=24)
-    ax.set_ylabel("% Trades", fontsize=24, color=_DARK_GRAY)
-    ax.set_title("Trades and Returns by Timezone", fontsize=26, fontweight="bold",
+    ax.set_xticklabels(labels, fontsize=12 * s)
+    ax.set_ylabel("% Trades", fontsize=12 * s, color=_DARK_GRAY)
+    ax.set_title("Trades and Returns by Timezone", fontsize=13 * s, fontweight="bold",
                  color="black", fontfamily="serif")
-    ax.legend(fontsize=20, loc="best", framealpha=0.7)
-    _apply_formal_style(ax, fontsize=22)
+    _apply_formal_style(ax, fontsize=11, fontscale=s)
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 
 
 def timezone_cumulative_returns_formal(pnl_raw: pd.Series, daily_returns: pd.Series,
-                                        figsize=(14, 3.5)) -> str:
+                                        aum: float = 1.0,
+                                        figsize=(10, 3), fontscale: float = 1.0) -> str:
     """Three-panel cumulative returns by timezone (London/NY/Asia).
     Matches R template: my_plot.xts(cumsum(pnl.london2)*100, ...).
     Returns base64 PNG."""
+    s = fontscale
     fig, axes = plt.subplots(1, 3, figsize=figsize)
     fig.patch.set_facecolor("white")
 
     if len(pnl_raw) == 0 or pnl_raw.index.tz is None:
         for ax in axes:
             ax.text(0.5, 0.5, "No timezone data", ha="center", va="center",
-                    fontsize=24, color=_DARK_GRAY)
-            _apply_formal_style(ax, fontsize=20)
+                    fontsize=12 * s, color=_DARK_GRAY)
+            _apply_formal_style(ax, fontsize=10, fontscale=s)
         fig.tight_layout(pad=0.5)
         return _fig_to_base64(fig)
+
+    # Normalize by AUM (matching R: pnl.xts <- pnl.raw/AUM)
+    pnl_norm = pnl_raw / aum
 
     # Classify trades by timezone (R: T06-T18=London, T18-T22=NY, rest=Asia)
     utc_hours = pnl_raw.index.tz_convert("UTC").hour
@@ -281,17 +293,17 @@ def timezone_cumulative_returns_formal(pnl_raw: pd.Series, daily_returns: pd.Ser
     ]
 
     for ax, (label, mask) in zip(axes, zones):
-        zone_pnl = pnl_raw[mask]
+        zone_pnl = pnl_norm[mask]
         if len(zone_pnl) > 0:
             # Build daily series from zone trades
             zone_daily = zone_pnl.resample("D").sum().fillna(0)
             cum = zone_daily.cumsum() * 100
-            ax.plot(cum.index, cum.values, color=_DARK_GRAY, linewidth=1.8)
+            ax.plot(cum.index, cum.values, color=_DARK_GRAY, linewidth=0.9 * s)
             ax.fill_between(cum.index, 0, cum.values, alpha=0.12, color=_LIGHT_GRAY)
-        ax.set_title(label, fontsize=24, fontweight="bold", color="black", fontfamily="serif")
-        ax.set_ylabel("% AUM", fontsize=22, color=_DARK_GRAY)
-        _apply_formal_style(ax, fontsize=20)
-        _format_date_axis(ax, fontsize=20)
+        ax.set_title(label, fontsize=12 * s, fontweight="bold", color="black", fontfamily="serif")
+        ax.set_ylabel("% AUM", fontsize=11 * s, color=_DARK_GRAY)
+        _apply_formal_style(ax, fontsize=10, fontscale=s)
+        _format_date_axis(ax, fontsize=10, fontscale=s)
 
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
