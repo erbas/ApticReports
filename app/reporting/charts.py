@@ -60,7 +60,7 @@ def _fig_to_base64(fig: plt.Figure) -> str:
     """Convert matplotlib figure to base64 PNG string."""
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=200, bbox_inches="tight",
-                facecolor="white", edgecolor="none")
+                pad_inches=0.05, facecolor="white", edgecolor="none")
     plt.close(fig)
     buf.seek(0)
     return base64.b64encode(buf.read()).decode("utf-8")
@@ -70,7 +70,7 @@ def _fig_to_bytes(fig: plt.Figure) -> bytes:
     """Convert matplotlib figure to PNG bytes (for PDF embedding)."""
     buf = io.BytesIO()
     fig.savefig(buf, format="png", dpi=200, bbox_inches="tight",
-                facecolor="white", edgecolor="none")
+                pad_inches=0.05, facecolor="white", edgecolor="none")
     plt.close(fig)
     buf.seek(0)
     return buf.read()
@@ -117,8 +117,8 @@ def performance_summary_formal(daily_returns: pd.Series, title: str = "",
     _apply_formal_style(axes[2], fontsize=10, fontscale=s)
 
     _format_date_axis(axes[2], fontsize=10, fontscale=s)
-    fig.tight_layout(pad=0.3)
-    fig.subplots_adjust(hspace=0.08)
+    fig.tight_layout(pad=0.5)
+    fig.subplots_adjust(hspace=0.12)
     return _fig_to_base64(fig)
 
 
@@ -135,7 +135,7 @@ def monthly_returns_bar_formal(daily_returns: pd.Series,
     ax.axhline(0, color=_LIGHT_GRAY, linewidth=0.3 * s)
     _apply_formal_style(ax, fontsize=10, fontscale=s)
     _format_date_axis(ax, fontsize=10, fontscale=s)
-    fig.tight_layout(pad=0.3)
+    fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 
 
@@ -217,7 +217,7 @@ def timezone_chart_formal(pnl_raw: pd.Series, aum: float = 1.0,
         ax.text(0.5, 0.5, "No timezone data", ha="center", va="center",
                 fontsize=12 * s, color=_DARK_GRAY)
         _apply_formal_style(ax, fontsize=11, fontscale=s)
-        fig.tight_layout(pad=0.3)
+        fig.tight_layout(pad=0.5)
         return _fig_to_base64(fig)
 
     # Normalize by AUM (matching R: pnl.xts <- pnl.raw/AUM)
@@ -274,7 +274,7 @@ def timezone_cumulative_returns_formal(pnl_raw: pd.Series, daily_returns: pd.Ser
             ax.text(0.5, 0.5, "No timezone data", ha="center", va="center",
                     fontsize=12 * s, color=_DARK_GRAY)
             _apply_formal_style(ax, fontsize=10, fontscale=s)
-        fig.tight_layout(pad=0.3)
+        fig.tight_layout(pad=0.5)
         return _fig_to_base64(fig)
 
     # Normalize by AUM (matching R: pnl.xts <- pnl.raw/AUM)
