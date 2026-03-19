@@ -8,13 +8,25 @@ import numpy as np
 def load_eod_prices(ccy_pair: str, path: str, tz: str = "Europe/London") -> pd.Series:
     """Load end-of-day prices from CSV. Returns Series indexed by tz-aware datetime at midnight.
 
-    CSV format: header row, then skip 1 row, columns [Date, Price].
-    Date format: dd/mm/yyyy.
+    Handles multiple CSV formats:
+      - Header + skip row + [Date, Price] (legacy R format)
+      - Header + [Date, Close/Price/...] (standard export)
+    Date parsing is flexible (d/mm/yyyy, dd/mm/yyyy, yyyy-mm-dd, etc.).
     """
     filename = os.path.join(path, f"{ccy_pair}_EOD.csv")
-    df = pd.read_csv(filename, skiprows=1, header=0, skipinitialspace=True)
+    # Peek at file to detect format
+    df_peek = pd.read_csv(filename, nrows=2, header=0, skipinitialspace=True)
+    first_col = df_peek.columns[0].strip().lower()
+
+    # If the header looks like a date (not "date"), the file has no real header
+    if first_col in ("date", "date%"):
+        df = pd.read_csv(filename, header=0, skipinitialspace=True)
+    else:
+        # Legacy format: header row is data, or there's a skip row
+        df = pd.read_csv(filename, skiprows=1, header=0, skipinitialspace=True)
+
     prices = pd.to_numeric(df.iloc[:, 1], errors="coerce")
-    dates = pd.to_datetime(df.iloc[:, 0], format="%d/%m/%Y")
+    dates = pd.to_datetime(df.iloc[:, 0], dayfirst=True, format="mixed")
     eod = pd.Series(prices.values, index=dates, name=ccy_pair)
     eod = eod.dropna()
     # Remove duplicate dates
