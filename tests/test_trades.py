@@ -25,6 +25,18 @@ class TestLoadNinjaTrades:
         assert pd.to_numeric(df["Entry.price"], errors="coerce").notna().all()
         assert pd.to_numeric(df["Exit.price"], errors="coerce").notna().all()
 
+    def test_space_separated_headers_normalised(self, tmp_dir):
+        """Real NinjaTrader 8 exports use spaces, not dots."""
+        path = os.path.join(tmp_dir, "nt8_export.csv")
+        with open(path, "w") as f:
+            f.write("Trade-#,Instrument,Account,Strategy,Market pos.,Quantity,Entry price,Exit price,Entry time,Exit time,Entry name,Exit name,Profit,Cum. profit,Commission,MAE,MFE,ETD,Bars,\n")
+            f.write("1,$XAGUSD,Backtest,TestStrat,Long,100000,17.67,17.19,23/01/2020 12:15:00,28/02/2020 05:55:00,1_long,Sell,-0.027,0,0,0,0,0,156,\n")
+        df = load_ninja_trades(path)
+        assert "Entry.time" in df.columns
+        assert "Exit.price" in df.columns
+        assert "Market.pos." in df.columns
+        assert len(df) == 1
+
     def test_missing_file_raises(self):
         with pytest.raises(FileNotFoundError):
             load_ninja_trades("/nonexistent/path.csv")
@@ -47,8 +59,8 @@ class TestExtractMetadata:
         meta = extract_metadata(df)
         assert meta["ccy_pair"] == "EURUSD"
 
-    def test_strat_dir_extracted(self, sample_trades_csv):
+    def test_strat_dir_from_market_pos(self, sample_trades_csv):
         df = load_ninja_trades(sample_trades_csv)
         meta = extract_metadata(df)
-        # Column index 4 is "Exit.time" in our CSV
-        assert meta["strat_dir"] != ""
+        # 3 longs + 1 short → mode is "Long"
+        assert meta["strat_dir"] == "Long"
