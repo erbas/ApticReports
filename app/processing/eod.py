@@ -116,5 +116,6 @@ def get_nearest_eod_vectorized(dts: pd.DatetimeIndex, eod_times: pd.DatetimeInde
 
     result_idx = pd.DatetimeIndex(result)
     if eod_sorted.tz is not None:
-        result_idx = result_idx.tz_localize(eod_sorted.tz)
+        # numpy .values strips tz and stores as UTC nanos, so localize as UTC first
+        result_idx = result_idx.tz_localize("UTC").tz_convert(eod_sorted.tz)
     return result_idx
