@@ -182,33 +182,21 @@ def generate_backtest_pdf(
             renamed_stats[display_k] = stats[k]
 
     # --- Generate charts ---
-    # Right column: 3-panel performance chart (R: fig.width=4, fig.height=5)
-    perf_fig_w = right_w / 25.4
-    perf_fig_h = perf_fig_w * 1.3  # ~5" tall for a ~3.7" wide chart
-    perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance",
-                                                   figsize=(perf_fig_w, perf_fig_h))
+    # Generate at large default figsizes for legible text, then let reportlab
+    # scale the images down to fit the PDF frames (shrinking preserves quality).
+    perf_b64 = charts.performance_summary_formal(daily_returns, title="Strategy Performance")
+    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns)
 
-    # Monthly bar (left column, wider than tall)
-    monthly_fig_w = left_w / 25.4
-    monthly_b64 = charts.monthly_returns_bar_formal(daily_returns, figsize=(monthly_fig_w, 1.3))
-
-    # Bottom row: three charts
     bot_chart_w = (usable_w - 4 * mm) / 3
-    bot_fig_w = bot_chart_w / 25.4
-    bot_fig_h = bot_fig_w * 0.75  # landscape aspect ratio
 
     try:
-        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum, figsize=(bot_fig_w, bot_fig_h))
+        hist_b64 = charts.returns_histogram_formal(pnl_raw, aum)
     except Exception:
         hist_b64 = None
 
-    vol_b64 = charts.rolling_vol_chart_formal(daily_returns, figsize=(bot_fig_w, bot_fig_h))
-    tz_b64 = charts.timezone_chart_formal(pnl_raw, figsize=(bot_fig_w, bot_fig_h))
-
-    # Second bottom row: timezone cumulative returns (R: fig.width=8.5, fig.height=2.5)
-    tz_cum_fig_w = usable_w / 25.4
-    tz_cum_b64 = charts.timezone_cumulative_returns_formal(
-        pnl_raw, daily_returns, figsize=(tz_cum_fig_w, 1.8))
+    vol_b64 = charts.rolling_vol_chart_formal(daily_returns)
+    tz_b64 = charts.timezone_chart_formal(pnl_raw)
+    tz_cum_b64 = charts.timezone_cumulative_returns_formal(pnl_raw, daily_returns)
 
     # --- Build the PDF using canvas + frames for precise positioning ---
     from reportlab.pdfgen import canvas as canvasmod
