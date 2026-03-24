@@ -36,10 +36,17 @@ def make_daily_pnl(
     # Parse entry/exit times in trade timezone, then convert to ref timezone
     # R's lubridate dmy_hms with truncated=1 handles both HH:MM:SS and HH:MM
     def _parse_datetimes(col):
-        try:
-            return pd.to_datetime(col, format="%d/%m/%Y %H:%M:%S")
-        except ValueError:
-            return pd.to_datetime(col, format="%d/%m/%Y %H:%M")
+        for fmt in (
+            "%d/%m/%Y %H:%M:%S",      # 24-hour with seconds
+            "%d/%m/%Y %H:%M",          # 24-hour without seconds
+            "%d/%m/%Y %I:%M:%S %p",    # 12-hour AM/PM with seconds
+            "%d/%m/%Y %I:%M %p",       # 12-hour AM/PM without seconds
+        ):
+            try:
+                return pd.to_datetime(col, format=fmt)
+            except ValueError:
+                continue
+        return pd.to_datetime(col, dayfirst=True, format="mixed")
 
     entries = _parse_datetimes(trades_csv["Entry.time"])
     exits = _parse_datetimes(trades_csv["Exit.time"])
@@ -156,19 +163,19 @@ def make_daily_pnl(
         pnl_raw.index = pd.DatetimeIndex(entries)
 
 
-    # Convert raw PnL to USD using nearest EOD conversion rate
+    # Convert raw PnL to USD using nearest EOD conversion rate (vectorized)
+    from .eod import get_nearest_eod_vectorized
     conv_times = ref_ccy_conv.index
-    pnl_raw_usd = pnl_raw.copy()
-    for i in range(len(pnl_raw)):
-        nearest = get_nearest_eod(pnl_raw.index[i], conv_times, direction=1)
-        pnl_raw_usd.iloc[i] = pnl_raw.iloc[i] * ref_ccy_conv.loc[nearest]
+    nearest_conv = get_nearest_eod_vectorized(pnl_raw.index, conv_times, direction=1)
+    conv_rates = ref_ccy_conv.loc[nearest_conv].values
+    pnl_raw_usd = pnl_raw * conv_rates
 
-    # Align exit times to official EOD for daily aggregation
+    # Align exit times to official EOD for daily aggregation (vectorized)
     all_exit_times = pd.to_datetime(all_trades["Exit.time"])
     if all_exit_times.dt.tz is None:
         all_exit_times = all_exit_times.dt.tz_localize(ref_tz)
-    eod_exit_list = [get_nearest_eod(x, trading_days, direction=1) for x in all_exit_times]
-    eod_exit_times = pd.DatetimeIndex(eod_exit_list)
+    eod_exit_times = get_nearest_eod_vectorized(
+        pd.DatetimeIndex(all_exit_times), trading_days, direction=1)
     all_trades["Exit.time.official"] = eod_exit_times
 
     # Create PnL series indexed by official EOD exit
@@ -178,12 +185,10 @@ def make_daily_pnl(
     pnl_daily = pnl_series.groupby(pnl_series.index.date).sum()
     pnl_daily.index = pd.to_datetime(pnl_daily.index).tz_localize(ref_tz)
 
-    # Convert daily PnL to USD
-    pnl_daily_usd = pnl_daily.copy()
-    for dt in pnl_daily.index:
-        nearest = get_nearest_eod(dt, conv_times, direction=1)
-        conv_rate = ref_ccy_conv.loc[nearest]
-        pnl_daily_usd.loc[dt] = pnl_daily.loc[dt] * conv_rate
+    # Convert daily PnL to USD (vectorized)
+    nearest_daily_conv = get_nearest_eod_vectorized(pnl_daily.index, conv_times, direction=1)
+    daily_conv_rates = ref_ccy_conv.loc[nearest_daily_conv].values
+    pnl_daily_usd = pnl_daily * daily_conv_rates
     pnl_daily_usd.name = "pnl_daily_usd"
 
     # Sanity check: sum of split PnL per TradeID should equal raw PnL
