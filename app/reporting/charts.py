@@ -248,6 +248,7 @@ def timezone_chart_formal(pnl_raw: pd.Series, figsize=(6, 4)) -> str:
                  color="black", fontfamily="serif")
     ax.legend(fontsize=20, loc="best", framealpha=0.7)
     _apply_formal_style(ax, fontsize=22)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.1f}"))
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 

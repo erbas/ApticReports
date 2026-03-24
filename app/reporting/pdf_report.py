@@ -166,7 +166,6 @@ def generate_backtest_pdf(
         "Compounded Annual Return (%)",
         "Max Drawdown (% AUM)",
         "Days to Recovery",
-        "Max Consecutive Losers",
         "Annualized Volatility (%)",
         "Sharpe Ratio",
         "Win/Loss Ratio",
