@@ -4,6 +4,20 @@ import numpy as np
 import pandas as pd
 
 
+def fill_trading_days(daily_returns: pd.Series) -> pd.Series:
+    """Reindex daily returns to all business days, filling missing days with 0.
+
+    The input series typically only contains dates where trades exited.
+    Days with no trade activity still have zero return and must be included
+    for correct volatility, Sharpe ratio, and drawdown duration calculations.
+    """
+    if daily_returns.empty:
+        return daily_returns
+    idx = pd.bdate_range(daily_returns.index.min(), daily_returns.index.max(),
+                         tz=daily_returns.index.tz)
+    return daily_returns.reindex(idx, fill_value=0.0)
+
+
 def total_return(daily_returns: pd.Series) -> float:
     """Total cumulative return (sum of daily returns)."""
     return daily_returns.sum()
@@ -76,6 +90,7 @@ def drawdown_series(daily_returns: pd.Series, geometric: bool = True) -> pd.Seri
 
 def drawdown_table(daily_returns: pd.Series, top: int = 5, geometric: bool = True) -> pd.DataFrame:
     """Table of top N drawdowns with start, trough, recovery, depth, and duration."""
+    daily_returns = fill_trading_days(daily_returns)
     dd = drawdown_series(daily_returns, geometric)
     if dd.empty:
         return pd.DataFrame()
@@ -191,6 +206,7 @@ def compute_all_metrics(daily_returns: pd.Series, pnl_raw: pd.Series | None = No
     daily_returns should be fractional returns (PnL / AUM).
     pnl_raw is optional (for trade-level metrics like win/loss).
     """
+    daily_returns = fill_trading_days(daily_returns)
     metrics = {
         "Total Return (% AUM)": total_return(daily_returns) * 100,
         "Compounded Annual Return (%)": annualized_return(daily_returns) * 100,

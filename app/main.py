@@ -281,8 +281,8 @@ async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
         )
 
         # Compute metrics
-        from app.reporting.metrics import compute_all_metrics
-        daily_returns = result["pnl_daily"] / aum
+        from app.reporting.metrics import compute_all_metrics, fill_trading_days
+        daily_returns = fill_trading_days(result["pnl_daily"] / aum)
         stats = compute_all_metrics(daily_returns, result["pnl_raw"], aum)
 
         # Generate charts
