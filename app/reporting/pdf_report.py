@@ -112,6 +112,7 @@ def generate_backtest_pdf(
     output_path: str,
 ) -> str:
     """Generate a single-page portrait A4 backtest PDF report. Returns path to PDF file."""
+    daily_returns = metrics.fill_trading_days(daily_returns)
     pdf_path = os.path.join(output_path, f"{filestem}.pdf")
 
     page_w, page_h = A4  # 210 x 297 mm (portrait)
@@ -164,7 +165,6 @@ def generate_backtest_pdf(
         "Compounded Annual Return (%)",
         "Max Drawdown (% AUM)",
         "Days to Recovery",
-        "Max Consecutive Losers",
         "Annualized Volatility (%)",
         "Sharpe Ratio",
         "Win/Loss Ratio",

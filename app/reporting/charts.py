@@ -266,6 +266,7 @@ def timezone_chart_formal(pnl_raw: pd.Series, aum: float = 1.0,
     ax.set_title("Trades & Returns by TZ", fontsize=13 * s, fontweight="bold",
                  color="black", fontfamily="serif")
     _apply_formal_style(ax, fontsize=11, fontscale=s)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.1f}"))
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 
@@ -352,7 +353,7 @@ def bottom_row_charts_formal(pnl_raw: pd.Series, daily_returns: pd.Series,
     axes[2].set_title("Trades & Returns by TZ", fontsize=10 * s, fontweight="bold",
                        color="black", fontfamily="serif")
     _apply_formal_style(axes[2], fontsize=8, fontscale=s)
-
+    axes[2].yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.1f}"))
     fig.tight_layout(pad=0.5)
     return _fig_to_base64(fig)
 
