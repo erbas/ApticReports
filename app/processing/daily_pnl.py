@@ -163,10 +163,11 @@ def make_daily_pnl(
         pnl_raw.index = pd.DatetimeIndex(entries)
 
 
-    # Convert raw PnL to USD using nearest EOD conversion rate (vectorized)
+    # Convert raw PnL to USD using nearest EOD conversion rate at EXIT time
+    # (PnL is realised at exit, so conversion should use exit-time FX rates)
     from .eod import get_nearest_eod_vectorized
     conv_times = ref_ccy_conv.index
-    nearest_conv = get_nearest_eod_vectorized(pnl_raw.index, conv_times, direction=1)
+    nearest_conv = get_nearest_eod_vectorized(pd.DatetimeIndex(exits), conv_times, direction=1)
     conv_rates = ref_ccy_conv.loc[nearest_conv].values
     pnl_raw_usd = pnl_raw * conv_rates
 

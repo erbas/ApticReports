@@ -35,7 +35,10 @@ def load_daily_pnl_file(filepath: str) -> tuple[pd.Series, dict]:
     col_name = df.columns[1]
     meta = parse_pnl_column_name(col_name)
 
-    dates = pd.to_datetime(df.iloc[:, 0], utc=True).dt.tz_localize(None).dt.normalize()
+    # Extract the local date from each timestamp string, ignoring UTC offset.
+    # Timestamps may have mixed offsets (e.g. +00:00 winter, +01:00 summer);
+    # converting to UTC first would shift some dates back a day.
+    dates = pd.to_datetime(df.iloc[:, 0].str.split(r"[+-]\d{2}:\d{2}$", regex=True).str[0]).dt.normalize()
 
     values = pd.to_numeric(df.iloc[:, 1], errors="coerce").fillna(0)
     series = pd.Series(values.values, index=dates.values, name=meta.get("ccy_pair", col_name))
