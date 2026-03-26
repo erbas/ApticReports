@@ -15,6 +15,9 @@ def fill_trading_days(daily_returns: pd.Series) -> pd.Series:
         return daily_returns
     idx = pd.bdate_range(daily_returns.index.min(), daily_returns.index.max(),
                          tz=daily_returns.index.tz)
+    # Union with original index to preserve any values on non-business days
+    # (e.g. weekend dates in EOD data) that would otherwise be silently dropped
+    idx = idx.union(daily_returns.index)
     return daily_returns.reindex(idx, fill_value=0.0)
 
 
