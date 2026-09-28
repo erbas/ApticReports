@@ -191,9 +191,11 @@ def backtest_tab():
 
         Form(
             Div(
-                H4("Trade File"),
+                H4("Trade Files"),
+                P("Select one or more NinjaTrader CSVs — each file is processed separately "
+                  "and can be a different instrument.", style="font-size:0.85rem; color:#666;"),
                 Div(
-                    Input(type="file", name="tradefile", accept=".csv", required=True),
+                    Input(type="file", name="tradefiles", accept=".csv", multiple=True, required=True),
                     cls="upload-area",
                 ),
                 cls="form-section",
@@ -235,15 +237,19 @@ def backtest_tab():
                 Div(
                     Label(
                         Input(type="checkbox", name="is_future", id="is_future"),
-                        " Futures contract",
+                        " Override point value",
                     ),
                     Label("Point value", fr="pt_value", style="margin-left:1rem;"),
                     Input(type="number", name="pt_value", id="pt_value", value="1", step="0.01",
                           style="width:120px; display:inline-block;"),
+                    P("Known instruments use their registered point value automatically "
+                      "(see table below). Ticking override applies this value to every file.",
+                      style="font-size:0.8rem; color:#666; margin:0.25rem 0 0;"),
                     style="margin-top:0.5rem;",
                 ),
                 cls="form-section",
             ),
+            instrument_table(),
             Button("Process Backtest", type="submit", cls="primary"),
             hx_post="/process/backtest",
             hx_target="#backtest-results",
@@ -256,100 +262,171 @@ def backtest_tab():
 
 
 @rt("/process/backtest")
-async def post(tradefile: UploadFile, timezone: str, aum: float, strategy: str,
+async def post(tradefiles: list[UploadFile], timezone: str, aum: float, strategy: str,
                timeframe: str, is_future: bool = False, pt_value: float = 1.0):
-    try:
-        # Save uploaded file
-        session_id = str(uuid.uuid4())[:8]
+    session_id = str(uuid.uuid4())[:8]
+    cards, summary = [], []
+    for tradefile in tradefiles:
         filename = tradefile.filename
-        save_path = os.path.join(UPLOAD_DIR, f"{session_id}_{filename}")
-        content = await tradefile.read()
-        with open(save_path, "wb") as f:
-            f.write(content)
+        try:
+            save_path = os.path.join(UPLOAD_DIR, f"{session_id}_{filename}")
+            content = await tradefile.read()
+            with open(save_path, "wb") as f:
+                f.write(content)
+            card, row = _process_one_backtest(
+                save_path, timezone=timezone, aum=aum, strategy=strategy,
+                timeframe=timeframe, is_future=is_future, pt_value=pt_value)
+            cards.append(card)
+            summary.append((filename, row, None))
+        except Exception as e:
+            cards.append(Div(H3(f"Failed: {filename}"),
+                             error_box(f"{e}\n\n{traceback.format_exc()}"), cls="results-card"))
+            summary.append((filename, None, str(e)))
 
-        # Process
-        from app.processing.daily_pnl import process_backtest
-        result = process_backtest(
-            filepath=save_path,
-            eod_path=EOD_DIR,
-            aum=aum,
-            strategy=strategy,
-            timeframe=timeframe,
-            is_future=is_future,
-            pt_value=pt_value,
-            timezone=timezone,
-            output_path=OUTPUT_DIR,
-        )
+    if len(tradefiles) == 1:
+        return cards[0]
+    return Div(batch_summary(summary), *cards)
 
-        # Compute metrics
-        from app.reporting.metrics import compute_all_metrics, fill_trading_days
-        daily_returns = fill_trading_days(result["pnl_daily"] / aum)
-        stats = compute_all_metrics(daily_returns, result["pnl_raw"], aum)
 
-        # Generate charts (formal style, matching R report)
-        from app.reporting.charts import (
-            performance_summary_formal, monthly_returns_bar_formal,
-            rolling_vol_chart_formal, returns_histogram_formal,
-            timezone_chart_formal, timezone_cumulative_returns_formal,
-        )
-        from app.reporting.pdf_report import generate_backtest_pdf
+def batch_summary(summary):
+    """Table summarising each file in a batch run."""
+    rows = []
+    for fname, row, err in summary:
+        if err:
+            rows.append(Tr(Td(fname), Td(Span("Failed", style="color:#b00;"), colspan=4), Td(err)))
+        else:
+            rows.append(Tr(Td(fname), Td(row["instrument"]), Td(row["direction"]),
+                           Td(f"{row['multiplier']:g}"), Td(f"{row['total_pnl']:,.0f}"),
+                           Td(download_links({"PDF": row["pdf"], "Daily CSV": row["daily"]}))))
+    ok = sum(1 for _, r, _ in summary if r)
+    return Div(
+        H3(f"Batch results: {ok}/{len(summary)} files processed"),
+        Table(
+            Thead(Tr(Th("File"), Th("Instrument"), Th("Direction"), Th("Multiplier"),
+                     Th("Total PnL (USD)"), Th(""))),
+            Tbody(*rows),
+            style="width:100%; font-size:0.9rem;",
+        ),
+        cls="results-card",
+    )
 
-        title = f"{strategy} {result['ccy_pair']}"
-        pnl_raw = result["pnl_raw"]
 
-        perf_chart = performance_summary_formal(daily_returns, title=title)
-        monthly_chart = monthly_returns_bar_formal(daily_returns)
-        vol_chart = rolling_vol_chart_formal(daily_returns)
+def instrument_table():
+    """Collapsible list of registered instruments and their PnL conversion rules."""
+    from app.processing.instruments import INSTRUMENTS
+    rows = []
+    for inst in INSTRUMENTS.values():
+        if inst.conversion is None:
+            conv = "—"
+        else:
+            pair, op = inst.conversion
+            conv = f"{'Multiply' if op == 'mul' else 'Divide'} by EOD {pair}"
+        rows.append(Tr(Td(inst.symbol), Td(inst.asset_class), Td(inst.description),
+                       Td(f"{inst.multiplier:g}"), Td(conv)))
+    return Details(
+        Summary("Registered instruments (PnL in USD)"),
+        Table(
+            Thead(Tr(Th("Symbol"), Th("Class"), Th("Description"), Th("Multiplier"),
+                     Th("USD conversion"))),
+            Tbody(*rows),
+            style="width:100%; font-size:0.85rem;",
+        ),
+        P("Other currency pairs convert via the quote-currency/USD EOD file.",
+          style="font-size:0.8rem; color:#666;"),
+        cls="form-section",
+    )
 
-        hist_chart = tz_chart = tz_cum_chart = None
-        try: hist_chart = returns_histogram_formal(pnl_raw, aum)
-        except Exception: pass
-        try: tz_chart = timezone_chart_formal(pnl_raw, aum=aum)
-        except Exception: pass
-        try: tz_cum_chart = timezone_cumulative_returns_formal(pnl_raw, daily_returns, aum=aum)
-        except Exception: pass
 
-        # Generate PDF
-        pdf_path = generate_backtest_pdf(
-            daily_returns=daily_returns, pnl_raw=pnl_raw, aum=aum,
-            strategy=strategy, ccy_pair=result["ccy_pair"],
-            timeframe=timeframe, strat_dir=result["strat_dir"],
-            filestem=result["filestem"], output_path=OUTPUT_DIR)
-        result["files"]["pdf"] = pdf_path
+def _process_one_backtest(save_path, *, timezone, aum, strategy, timeframe, is_future, pt_value):
+    """Process a single trade file. Returns (results card, summary row)."""
+    from app.processing.daily_pnl import process_backtest
+    result = process_backtest(
+        filepath=save_path,
+        eod_path=EOD_DIR,
+        aum=aum,
+        strategy=strategy,
+        timeframe=timeframe,
+        is_future=is_future,
+        pt_value=pt_value,
+        timezone=timezone,
+        output_path=OUTPUT_DIR,
+    )
 
-        # Build results UI — charts with proper sizing
-        small_row = []
-        if hist_chart:
-            small_row.append(chart_img(hist_chart, "Returns Histogram", cls="chart-half"))
-        if vol_chart:
-            small_row.append(chart_img(vol_chart, "Rolling Volatility", cls="chart-half"))
-        if tz_chart:
-            small_row.append(chart_img(tz_chart, "Timezone Analysis", cls="chart-half"))
+    # Compute metrics
+    from app.reporting.metrics import compute_all_metrics, fill_trading_days
+    daily_returns = fill_trading_days(result["pnl_daily"] / aum)
+    stats = compute_all_metrics(daily_returns, result["pnl_raw"], aum)
 
-        chart_elements = [
-            chart_img(perf_chart, "Performance Summary", cls="chart-wide"),
-            chart_img(monthly_chart, "Monthly Returns", cls="chart-wide"),
-        ]
-        if small_row:
-            chart_elements.append(Div(*small_row, cls="chart-row"))
-        if tz_cum_chart:
-            chart_elements.append(chart_img(tz_cum_chart, "Timezone Cumulative Returns"))
+    # Generate charts (formal style, matching R report)
+    from app.reporting.charts import (
+        performance_summary_formal, monthly_returns_bar_formal,
+        rolling_vol_chart_formal, returns_histogram_formal,
+        timezone_chart_formal, timezone_cumulative_returns_formal,
+    )
+    from app.reporting.pdf_report import generate_backtest_pdf
 
-        return Div(
-            H3(f"Results: {strategy} {result['ccy_pair']} {timeframe} {result['strat_dir']}"),
-            metrics_display(stats),
-            *chart_elements,
-            download_links({
-                "Daily PnL CSV": result["files"]["daily"],
-                "Processed Trades": result["files"]["trades"],
-                "Raw PnL": result["files"]["raw"],
-                "PDF Report": result["files"].get("pdf"),
-            }),
-            cls="results-card",
-        )
+    title = f"{strategy} {result['ccy_pair']}"
+    pnl_raw = result["pnl_raw"]
 
-    except Exception as e:
-        return error_box(f"{e}\n\n{traceback.format_exc()}")
+    perf_chart = performance_summary_formal(daily_returns, title=title)
+    monthly_chart = monthly_returns_bar_formal(daily_returns)
+    vol_chart = rolling_vol_chart_formal(daily_returns)
+
+    hist_chart = tz_chart = tz_cum_chart = None
+    try: hist_chart = returns_histogram_formal(pnl_raw, aum)
+    except Exception: pass
+    try: tz_chart = timezone_chart_formal(pnl_raw, aum=aum)
+    except Exception: pass
+    try: tz_cum_chart = timezone_cumulative_returns_formal(pnl_raw, daily_returns, aum=aum)
+    except Exception: pass
+
+    # Generate PDF
+    pdf_path = generate_backtest_pdf(
+        daily_returns=daily_returns, pnl_raw=pnl_raw, aum=aum,
+        strategy=strategy, ccy_pair=result["ccy_pair"],
+        timeframe=timeframe, strat_dir=result["strat_dir"],
+        filestem=result["filestem"], output_path=OUTPUT_DIR)
+    result["files"]["pdf"] = pdf_path
+
+    # Build results UI — charts with proper sizing
+    small_row = []
+    if hist_chart:
+        small_row.append(chart_img(hist_chart, "Returns Histogram", cls="chart-half"))
+    if vol_chart:
+        small_row.append(chart_img(vol_chart, "Rolling Volatility", cls="chart-half"))
+    if tz_chart:
+        small_row.append(chart_img(tz_chart, "Timezone Analysis", cls="chart-half"))
+
+    chart_elements = [
+        chart_img(perf_chart, "Performance Summary", cls="chart-wide"),
+        chart_img(monthly_chart, "Monthly Returns", cls="chart-wide"),
+    ]
+    if small_row:
+        chart_elements.append(Div(*small_row, cls="chart-row"))
+    if tz_cum_chart:
+        chart_elements.append(chart_img(tz_cum_chart, "Timezone Cumulative Returns"))
+
+    card = Div(
+        H3(f"Results: {strategy} {result['ccy_pair']} {timeframe} {result['strat_dir']}"),
+        metrics_display(stats),
+        *chart_elements,
+        download_links({
+            "Daily PnL CSV": result["files"]["daily"],
+            "Processed Trades": result["files"]["trades"],
+            "Raw PnL": result["files"]["raw"],
+            "PDF Report": result["files"].get("pdf"),
+        }),
+        cls="results-card",
+    )
+    row = {
+        "instrument": result["ccy_pair"],
+        "direction": result["strat_dir"],
+        "multiplier": result["multiplier"],
+        "total_pnl": float(result["pnl_daily"].sum()),
+        "pdf": result["files"].get("pdf"),
+        "daily": result["files"]["daily"],
+    }
+    return card, row
 
 
 # ── Portfolio Tab ────────────────────────────────────────────────────────────

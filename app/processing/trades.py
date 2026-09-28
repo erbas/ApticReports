@@ -64,8 +64,9 @@ def load_ninja_trades(filepath: str) -> pd.DataFrame:
 
 def extract_metadata(trades: pd.DataFrame) -> dict:
     """Extract currency pair and strategy direction from loaded trades."""
-    instrument = str(trades["Instrument"].iloc[0])
-    ccy_pair = instrument.replace("$", "")
+    from .instruments import normalise_symbol
+
+    ccy_pair = normalise_symbol(trades["Instrument"].iloc[0])
 
     # Determine predominant direction from the Market.pos. column
     if "Market.pos." in trades.columns and len(trades) > 0:
