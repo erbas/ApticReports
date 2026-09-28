@@ -51,11 +51,26 @@ def load_usd_conversion(ccy_pair: str, path: str, pnl_ccy: str = "USD") -> pd.Se
       - If pnl_ccy == base ccy (ccy1) → find ccy2→pnl_ccy pair
       - Otherwise → find ccy2→pnl_ccy pair
     """
-    ccy1 = ccy_pair[:3]
+    from .instruments import get_instrument
+
     ccy2 = ccy_pair[3:6]
     eod_files = [f for f in os.listdir(path) if f.endswith("_EOD.csv")]
 
-    if pnl_ccy == ccy2:
+    inst = get_instrument(ccy_pair) if pnl_ccy == "USD" else None
+    if inst is not None:
+        if inst.conversion is None:
+            eod = load_eod_prices(ccy_pair, path)
+            conv = pd.Series(np.ones(len(eod)), index=eod.index, name=ccy_pair)
+        else:
+            conv_pair, op = inst.conversion
+            if f"{conv_pair}_EOD.csv" not in eod_files:
+                raise FileNotFoundError(
+                    f"{ccy_pair} needs end-of-day reval file {conv_pair}_EOD.csv"
+                )
+            rate = load_eod_prices(conv_pair, path)
+            conv = rate if op == "mul" else 1.0 / rate
+            conv.name = conv_pair
+    elif pnl_ccy == ccy2:
         eod = load_eod_prices(ccy_pair, path)
         conv = pd.Series(np.ones(len(eod)), index=eod.index, name=ccy_pair)
     else:

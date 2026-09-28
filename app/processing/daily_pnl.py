@@ -226,6 +226,7 @@ def process_backtest(
     import os
     from .trades import load_ninja_trades, extract_metadata
     from .eod import load_eod_prices, load_usd_conversion
+    from .instruments import get_multiplier
 
     trades_csv = load_ninja_trades(filepath)
     meta = extract_metadata(trades_csv)
@@ -240,10 +241,12 @@ def process_backtest(
     pnl_daily = result["pnl_daily"]
     pnl_raw = result["pnl_raw"]
 
-    # Apply futures multiplier
-    if is_future:
-        pnl_daily = pnl_daily * pt_value
-        pnl_raw = pnl_raw * pt_value
+    # Point-value multiplier: an explicit futures override wins, otherwise
+    # use the instrument registry (1.0 for unlisted instruments)
+    multiplier = pt_value if is_future else get_multiplier(ccy_pair)
+    if multiplier != 1.0:
+        pnl_daily = pnl_daily * multiplier
+        pnl_raw = pnl_raw * multiplier
 
     # Scale daily PnL as returns (divide by AUM)
     pnl_daily_returns = pnl_daily / aum
@@ -273,6 +276,7 @@ def process_backtest(
         "discrepancies": result["discrepancies"],
         "ccy_pair": ccy_pair,
         "strat_dir": strat_dir,
+        "multiplier": multiplier,
         "filestem": filestem,
         "files": {
             "trades": trades_file,
